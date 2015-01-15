@@ -2,7 +2,7 @@
   "name": "repeat.js",
   "version": "0.0.0",
   "description": "A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. ",
-  "author": "",
+  "author": "William Mantly <wmantly@gmail.com>",
   "contributors": [
     "Derek Hu <derek.dchu@gmail.com>"
   ],
