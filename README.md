@@ -1,11 +1,11 @@
-# repeatJS
+# jq-repeat
 A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. Simple, quick and powerful templating.
 
 
 # About
-repeatJS is a simple repeating templating tool. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
+jq-repeat is a simple repeating templating tool. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
 
-* __repeatJS requires [jQuery](http://jquery.com/) 1.x/2.x and [Mustache](https://github.com/janl/mustache.js) to run__.
+* __jq-repeat requires [jQuery](http://jquery.com/) 1.x/2.x and [Mustache](https://github.com/janl/mustache.js) to run__.
 
 ## Template
 To set up a repeat template, write any element tag you wish to repeat once where you want the repeating to start, this will serve as the template and starting point.

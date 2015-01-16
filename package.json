@@ -1,5 +1,5 @@
 {
-  "name": "repeat.js",
+  "name": "jq-repeat",
   "version": "0.0.0",
   "description": "A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. ",
   "author": "William Mantly <wmantly@gmail.com>",
@@ -11,7 +11,7 @@
     "prepublish": "gulp default",
     "test": "gulp test"
   },
-  "dependencies": {},#add jQuery and mustache
+  "dependencies": {}, //add jQuery and mustache
   "devDependencies": {
     "gulp": "^3.8.10",
     "gulp-concat": "^2.4.3",
@@ -23,10 +23,10 @@
   "license": "MIT",
   "repository": { 
     "type": "git",
-    "url": "http://github.com/wmantly/repeatJS/"
+    "url": "http://github.com/wmantly/jq-repeat/"
   },
   "bugs":{ 
-    "url" : "http://github.com/wmantly/repeatJS/issues",
+    "url" : "http://github.com/wmantly/jq-repeat/issues",
     "email" : "wmantly@gmail.com"
-}
+  }
 }
