@@ -2,16 +2,24 @@
   "name": "jq-repeat",
   "version": "0.0.0",
   "description": "A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. ",
+  "keywords": [
+    "dom",
+    "jquery",
+    "mustache"
+  ],
   "author": "William Mantly <wmantly@gmail.com>",
   "contributors": [
-    "Derek Hu <derek.dchu@gmail.com>"
+    {
+      "name": "Derek Hu",
+      "email": "<derek.dchu@gmail.com>"
+    }
   ],
   "private": true,
   "scripts": {
     "prepublish": "gulp default",
     "test": "gulp test"
   },
-  "dependencies": {}, //add jQuery and mustache
+  "dependencies": {},
   "devDependencies": {
     "gulp": "^3.8.10",
     "gulp-concat": "^2.4.3",
