@@ -1,6 +1,7 @@
 # jq-repeat
 A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. Simple, quick and powerful templating.
 
+Try a live [demo](http://plnkr.co/edit/QGLrUMXl5HXeYdLnrNIN?p=preview).
 
 # About
 jq-repeat is a simple repeating templating tool. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
