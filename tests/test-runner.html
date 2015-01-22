@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Refactored date examples</title>
+  <title>jq-repeat tests</title>
  
   <link rel="stylesheet" href="lib/qunit-1.17.1.css">
   <script src="lib/qunit-1.17.1.js"></script>
@@ -24,8 +24,12 @@
     spelling: 'three'
   }];
 
+  QUnit.test( "jq-repeat basics", function( assert ) {
+    assert.ok( $.scope )
+    assert.throws( $.scope.wef34e )
+  } );
 
-  QUnit.module( "module jq-repeat", {
+  QUnit.module( "jq-repeat", {
     beforeEach: function( assert ) {
       this.data = data.slice()
       assert.ok( $.scope.myRepeat )
@@ -37,38 +41,36 @@
     }
   });
 
-  QUnit.test( "jq-repeat basics", function( assert ) {
+  QUnit.test( "initialized", function( assert ) {
     assert.equal( $.scope.myRepeat.length , this.data.length );
   } );
 
-  QUnit.test( "jq-repeat pop", function( assert ) {
+  QUnit.test( "pop", function( assert ) {
     assert.deepEqual( $.scope.myRepeat.pop(), this.data[ this.data.length-1 ] );
     assert.equal( $.scope.myRepeat.length , this.data.length-1 );
   } );
 
-  QUnit.test( "jq-repeat reverse", function( assert ) {
+  QUnit.test( "reverse", function( assert ) {
     assert.deepEqual( $.scope.myRepeat.reverse(), this.data.reverse() );
     assert.deepEqual( $.scope.myRepeat , this.data );
-    console.log( $.scope.myRepeat )
   } );
 
-  QUnit.test( "jq-repeat shift", function( assert ) {
+  QUnit.test( "shift", function( assert ) {
     assert.deepEqual( $.scope.myRepeat.shift(), this.data.shift() );
     assert.deepEqual( $.scope.myRepeat , this.data );
   } );
 
-  QUnit.test( "jq-repeat indexOf lookup", function( assert ) {
+  QUnit.test( "indexOf lookup", function( assert ) {
     assert.equal( $.scope.myRepeat.indexOf( 'character', '2') , 1 );
   } );
 
-  QUnit.test( "jq-repeat indexOf __index", function( assert ) {
+  QUnit.test( "indexOf __index", function( assert ) {
     $.scope.myRepeat.__index = 'character';
     assert.equal( $.scope.myRepeat.indexOf( '3' ) , 2 );
-    // assert.equal( $.scope.myRepeat.__index, 'character' );
 
   } );
 
-  QUnit.test( "jq-repeat update", function( assert ) {
+  QUnit.test( "update", function( assert ) {
     assert.deepEqual( $.scope.myRepeat.update( 'character', '2', this.data[0]) , this.data[1] );
     this.data[1] = this.data[0]
     assert.deepEqual( $.scope.myRepeat , this.data );
