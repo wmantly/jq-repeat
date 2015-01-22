@@ -1,5 +1,5 @@
 (function($){
-"use strict";
+'use strict';
 	if(!$.scope) $.scope = {};
 	
 	var make = function( element ){
