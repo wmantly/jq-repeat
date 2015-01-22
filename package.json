@@ -25,16 +25,17 @@
     "gulp-concat": "^2.4.3",
     "gulp-jshint": "^1.9.0",
     "gulp-notify": "^2.1.0",
+    "gulp-qunit": "^1.2.1",
     "gulp-rename": "^1.2.0",
     "gulp-uglify": "^1.0.2"
   },
   "license": "MIT",
-  "repository": { 
+  "repository": {
     "type": "git",
     "url": "http://github.com/wmantly/jq-repeat/"
   },
-  "bugs":{ 
-    "url" : "http://github.com/wmantly/jq-repeat/issues",
-    "email" : "wmantly@gmail.com"
+  "bugs": {
+    "url": "http://github.com/wmantly/jq-repeat/issues",
+    "email": "wmantly@gmail.com"
   }
 }

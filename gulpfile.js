@@ -1,12 +1,12 @@
-"use strict";
-
+'use strict';
 
 var gulp = require('gulp'),
     notify = require('gulp-notify'),    
     jshint = require('gulp-jshint'),
     rename = require('gulp-rename'),
     concat = require('gulp-concat'),
-    uglify = require('gulp-uglify');
+    uglify = require('gulp-uglify'),
+    qunit = require('gulp-qunit');
 
 
 gulp.task('default', function() {
@@ -24,4 +24,9 @@ gulp.task('scripts', function() {
     .on('error', function (err) { console.log(err.message); })
     .pipe(gulp.dest('dist/js'))
     .pipe(notify({ message: "Scripts task complete" }));
+});
+
+gulp.task('test', function() {
+    return gulp.src('./tests/test-runner.html')
+        .pipe(qunit());
 });
