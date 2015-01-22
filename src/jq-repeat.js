@@ -109,7 +109,7 @@
 			result.pop = function(){
 				//remove and return array element
 
-				return this.splice( -1, 1 );
+				return this.splice( -1, 1 )[0];
 			},
 			result.reverse = function() {
 				var temp = this.splice( 0 );
@@ -122,7 +122,7 @@
 				return this;
 			},
 			result.shift = function() {
-				return this.splice( 0, 1 );
+				return this.splice( 0, 1 )[0];
 			},
 			result.loop = function(){
 				var temp = this[0];
@@ -142,7 +142,7 @@
 					value = arguments[0];
 					key = this.__index;
 				}
-				for ( index = 0; index < this.length; ++index ) {
+				for ( var index = 0; index < this.length; ++index ) {
 					if( this[index][key] == value ){
 						return index;
 					}
@@ -159,7 +159,7 @@
 				var index = this.indexOf( key, value );
 				if(index === -1) return [];
 				var object = $.extend( true, {}, this[index], update );
-				return this.splice( index, 1, object );
+				return this.splice( index, 1, object )[0];
 			},
 			result.__put = function(){
 				this.show(); 
