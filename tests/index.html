@@ -9,13 +9,79 @@
   <script src="lib/jquery-1.11.2.min.js"></script>
   <script src="lib/mustashe.js"></script>
   <script src="../src/jq-repeat.js"></script>
+ 
+  <script>
+  'use strict'
+
+  var data = [{
+    character: '1',
+    spelling: 'one'
+  }, {
+    character: '2',
+    spelling: 'two'
+  }, {
+    character: '3',
+    spelling: 'three'
+  }];
+
+
+  QUnit.module( "module jq-repeat", {
+    beforeEach: function( assert ) {
+      this.data = data.slice()
+      assert.ok( $.scope.myRepeat )
+      assert.equal( $.scope.myRepeat.push.apply( $.scope.myRepeat , this.data ), this.data.length );
+    },
+    afterEach: function( assert ) {
+      $.scope.myRepeat.splice( 0, $.scope.myRepeat.length )
+      assert.equal( $.scope.myRepeat.length , 0 );
+    }
+  });
+
+  QUnit.test( "jq-repeat basics", function( assert ) {
+    assert.equal( $.scope.myRepeat.length , this.data.length );
+  } );
+
+  QUnit.test( "jq-repeat pop", function( assert ) {
+    assert.deepEqual( $.scope.myRepeat.pop(), this.data[ this.data.length-1 ] );
+    assert.equal( $.scope.myRepeat.length , this.data.length-1 );
+  } );
+
+  QUnit.test( "jq-repeat reverse", function( assert ) {
+    assert.deepEqual( $.scope.myRepeat.reverse(), this.data.reverse() );
+    assert.deepEqual( $.scope.myRepeat , this.data );
+    console.log( $.scope.myRepeat )
+  } );
+
+  QUnit.test( "jq-repeat shift", function( assert ) {
+    assert.deepEqual( $.scope.myRepeat.shift(), this.data.shift() );
+    assert.deepEqual( $.scope.myRepeat , this.data );
+  } );
+
+  QUnit.test( "jq-repeat indexOf lookup", function( assert ) {
+    assert.equal( $.scope.myRepeat.indexOf( 'character', '2') , 1 );
+  } );
+
+  QUnit.test( "jq-repeat indexOf __index", function( assert ) {
+    $.scope.myRepeat.__index = 'character';
+    assert.equal( $.scope.myRepeat.indexOf( '3' ) , 2 );
+    // assert.equal( $.scope.myRepeat.__index, 'character' );
+
+  } );
+
+  QUnit.test( "jq-repeat update", function( assert ) {
+    assert.deepEqual( $.scope.myRepeat.update( 'character', '2', this.data[0]) , this.data[1] );
+    this.data[1] = this.data[0]
+    assert.deepEqual( $.scope.myRepeat , this.data );
+  } );
+
+  </script>
 </head>
 <body>
  
 <div id="qunit"></div>
 
 <p jq-repeat="myRepeat">
-    {{ character }} in English {{ spelling }}
+    {{ character }} {{ spelling }}
 </p>
  
 </body>
