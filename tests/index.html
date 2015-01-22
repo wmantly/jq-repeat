@@ -24,7 +24,6 @@
     spelling: 'three'
   }];
 
-
   QUnit.module( "module jq-repeat", {
     beforeEach: function( assert ) {
       this.data = data.slice()
@@ -49,7 +48,6 @@
   QUnit.test( "jq-repeat reverse", function( assert ) {
     assert.deepEqual( $.scope.myRepeat.reverse(), this.data.reverse() );
     assert.deepEqual( $.scope.myRepeat , this.data );
-    console.log( $.scope.myRepeat )
   } );
 
   QUnit.test( "jq-repeat shift", function( assert ) {
@@ -64,7 +62,6 @@
   QUnit.test( "jq-repeat indexOf __index", function( assert ) {
     $.scope.myRepeat.__index = 'character';
     assert.equal( $.scope.myRepeat.indexOf( '3' ) , 2 );
-    // assert.equal( $.scope.myRepeat.__index, 'character' );
 
   } );
 
