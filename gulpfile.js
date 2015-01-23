@@ -10,7 +10,7 @@ var gulp = require('gulp'),
 
 
 gulp.task('default', function() {
-  gulp.start('scripts');
+  gulp.start(['test', 'scripts']);
 });
 
 gulp.task('scripts', function() {
