@@ -10,7 +10,7 @@ var gulp = require('gulp'),
 
 
 gulp.task('default', function() {
-  gulp.start(['test', 'scripts']);
+  gulp.start(['scripts', 'test']);
 });
 
 gulp.task('scripts', function() {
@@ -26,7 +26,14 @@ gulp.task('scripts', function() {
     .pipe(notify({ message: "Scripts task complete" }));
 });
 
-gulp.task('test', function() {
-    return gulp.src('./tests/test-runner.html')
+gulp.task('test.src', function() {
+    return gulp.src('./tests/test-src.html')
         .pipe(qunit());
 });
+
+gulp.task('test.min', function() {
+    return gulp.src('./tests/test-min.html')
+        .pipe(qunit());
+});
+
+gulp.task('test', ['test.src', 'test.min'])
