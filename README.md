@@ -73,5 +73,5 @@ The repeat object can take many methods used for arrays, as arrays are the inter
 
 ## Credits
 * Written by [William Mantly](https://github.com/wmantly)
-* Big thanks to [Derek Hu](https://github.com/derek-dchu) for packing it in NPM and other house keeping.
+* Big thanks to [Derek Hu](https://github.com/derek-dchu) for packing NPM and other general house keeping.
 * Also, thanks to [Raja Kapur](https://github.com/aonic) for advice and guidance.
