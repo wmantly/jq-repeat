@@ -1,8 +1,9 @@
 # jq-repeat [![Build Status](https://travis-ci.org/wmantly/jq-repeat.svg)](https://travis-ci.org/wmantly/jq-repeat)
 A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. Simple, quick and powerful templating.
 
-Try a live [demo](http://plnkr.co/edit/QGLrUMXl5HXeYdLnrNIN?p=preview).<br>
-To do list [demo](http://jsfiddle.net/wmantly/nLj6nr4q/)
+Try a live [demo](http://plnkr.co/edit/QGLrUMXl5HXeYdLnrNIN?p=preview).<br/>
+To do list [demo](http://jsfiddle.net/wmantly/nLj6nr4q/)<br/>
+Reddit JSON feed [demo](http://jsfiddle.net/wmantly/sge3zr28/)
 
 # About
 jq-repeat is a simple repeating templating tool. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
