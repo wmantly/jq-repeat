@@ -16,7 +16,6 @@
   ],
   "private": true,
   "scripts": {
-    "prepublish": "gulp default",
     "test": "gulp test"
   },
   "dependencies": {},
