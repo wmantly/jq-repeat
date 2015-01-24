@@ -1,6 +1,6 @@
 {
   "name": "jq-repeat",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. ",
   "keywords": [
     "dom",
