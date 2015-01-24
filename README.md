@@ -7,7 +7,7 @@ To do list [demo](http://jsfiddle.net/wmantly/nLj6nr4q/)
 # About
 jq-repeat is a simple repeating templating tool. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
 
-* __jq-repeat requires [jQuery](http://jquery.com/) 1.x/2.x and [Mustache](https://github.com/janl/mustache.js) to run__.
+* __jq-repeat requires [jQuery](http://jquery.com/) 1.x/2.x and [Mustache](https://github.com/janl/mustache.js) 1.x to run__.
 
 ## Template
 To set up a repeat template, write any element tag you wish to repeat once where you want the repeating to start, this will serve as the template and starting point.
@@ -70,3 +70,8 @@ The repeat object can take many methods used for arrays, as arrays are the inter
 * `$.scope.myRepeat.__put` is the function that will run when a element is being inserted. This must be a function and must include this.show(), or some other way of un-hiding 'this'.
 * `$.scope.myRepeat.__take` is the function that will run when an element is being removes. This must be a function and include this.remove() or some other way to remove 'this'.
 * `$scope.myRepeat.__index` is the propriety that defines the object key to use an the index. If this is set, a string can be used in place of a number for any index reference.
+
+## Credits
+* Written by [William Mantly](https://github.com/wmantly)
+* Big thanks to [Derek Hu](https://github.com/derek-dchu) for packing it in NPM and other house keeping.
+* Also, thanks to [Raja Kapur](https://github.com/aonic) for advice and guidance.
