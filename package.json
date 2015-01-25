@@ -7,7 +7,10 @@
     "jquery",
     "mustache"
   ],
-  "author": "William Mantly <wmantly@gmail.com>",
+  "author": {
+      "name": "William Mantly",
+      "email": "wmantly@gmail.com"
+    },
   "contributors": [
     {
       "name": "Derek Hu",
