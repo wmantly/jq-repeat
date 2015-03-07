@@ -1,9 +1,9 @@
 # jq-repeat [![Build Status](https://travis-ci.org/wmantly/jq-repeat.svg)](https://travis-ci.org/wmantly/jq-repeat)
 A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. Simple, quick and powerful templating.
 
-Try a live [demo](http://plnkr.co/edit/QGLrUMXl5HXeYdLnrNIN?p=preview).<br/>
-To do list [demo](http://jsfiddle.net/wmantly/nLj6nr4q/)<br/>
-Reddit JSON feed [demo](http://jsfiddle.net/wmantly/sge3zr28/)
+* Try a live [demo](http://plnkr.co/edit/QGLrUMXl5HXeYdLnrNIN?p=preview)
+* To do list [demo](http://jsfiddle.net/wmantly/nLj6nr4q/)
+* Reddit JSON feed [demo](http://jsfiddle.net/wmantly/sge3zr28/)
 
 # About
 jq-repeat is a simple repeating templating tool. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
@@ -75,5 +75,5 @@ The repeat object can take many methods used for arrays, as arrays are the inter
 
 ## Credits
 * Written by [William Mantly](https://github.com/wmantly)
-* Big thanks to [Derek Hu](https://github.com/derek-dchu) for creating NPM and bower package and other general house keeping.
+* Big thanks to [Derek Hu](https://github.com/derek-dchu) for creating NPM and bower package, and other general house keeping.
 * Also, thanks to [Raja Kapur](https://github.com/aonic) for advice and guidance.
