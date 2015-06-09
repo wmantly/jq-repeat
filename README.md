@@ -1,19 +1,18 @@
 # jq-repeat [![Build Status](https://travis-ci.org/wmantly/jq-repeat.svg)](https://travis-ci.org/wmantly/jq-repeat)
-A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. Simple, quick and powerful templating.
+A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. Simple, quick and powerful templating. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
 
 * Try a live [demo](http://plnkr.co/edit/QGLrUMXl5HXeYdLnrNIN?p=preview)
 * To do list [demo](http://jsfiddle.net/wmantly/nLj6nr4q/)
 * Reddit JSON feed [demo](http://jsfiddle.net/wmantly/sge3zr28/)
 
-# About
-jq-repeat is a simple repeating templating tool. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
+# Requirements 
 
 * __jq-repeat requires [jQuery](http://jquery.com/) 1.x/2.x and [Mustache](https://github.com/janl/mustache.js) 1.x to run__.
 
 ## Template
-To set up a repeat template, write any element tag you wish to repeat once where you want the repeating to start, this will serve as the template and starting point.
+To set up a jq-repeat template, write any element tag you wish to repeat once where you want the repeating to start, this will serve as the template and starting point.
 
-Simply add a jq-repeat attribute with a unique value for the reference name for that template, in this case `toDo`. 
+Simply add a `jq-repeat` attribute with a unique value for the reference name for that template, in this case `toDo`. 
 ```html
 <ul>
     <li jq-repeat="toDo">
