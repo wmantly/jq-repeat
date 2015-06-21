@@ -68,7 +68,7 @@ The repeat object can take many methods used for arrays, as arrays are the inter
   * **update** *Type: Object*
     This is the object that will be applied to the matching element.
 * `$.scope.toDo.__put` is the function that will run when a element is being inserted. This must be a function and must include this.show(), or some other way of un-hiding 'this'.
-* `$.scope.toDo.__take` is the function that will run when an element is being removes. This must be a function and include this.remove() or some other way to remove 'this'.
+* `$.scope.toDo.__take` is the function that will run when an element is being removed. This must be a function and include this.remove() or some other way to remove 'this'.
 * `$scope.toDo.__index` is the propriety that defines the object key to use an the index. If this is set, a string can be used in place of a number for any index reference.
 
 ## Credits
