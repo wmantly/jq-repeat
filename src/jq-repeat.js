@@ -21,6 +21,8 @@
 			result.splice = function(){
 				//splice does all the heavy lifting by interacting with the DOM elements.
 
+				var toProto = [...args]
+				
 				var index;
 				//if a string is submitted as the index, try to match it to index number
 				if( typeof arguments[0] === 'string' ){
@@ -31,6 +33,10 @@
 				}else{
 					index = arguments[0]; //set where to start
 				}
+
+				toProto.unshift(index)
+
+				
 				var howMany = arguments[1]; //sets the amount of fields to remove
 				var args = Array.prototype.slice.call( arguments ); // coverts arguments into array 
 				var toAdd = args.slice(2); // only keeps fields to add to array
@@ -101,7 +107,8 @@
 				}
 				
 				//set and return new array
-				return Array.prototype.splice.apply( this, arguments );
+				return Array.prototype.splice.apply(this, toProto);
+
 			};
 			result.push = function(){
 				//add one or more objects to the array
