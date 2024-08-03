@@ -61,33 +61,30 @@ $.scope.toDo.push({
 ## Methods
 
 - `$.scope.toDo.push([object])`
-  - **Description**: The method will just insert an object with the relevant key and value pair as used in your template.
+  - **Description**: The method will just insert object with the relevent key and value pair as used in your template.
   - **Parameter**:
-    - **object** (_Type: Object_): Object with key and value in the HTML template.
-
+    - **Type: object**: Object with key and value in the HTML template.
 - `$.scope.toDo.pop()`
   - **Description**: The method will remove and return the last element in the repeat array.
-
 - `$.scope.toDo.reverse()`
-  - **Description**: The method will reverse the repeat array by index number. 
-  - **Note**: If the index is a number, it will use that and will return the newly formatted array.
-
+  - **Description**: The method will reverse the repeat array and append the array.
 - `$.scope.toDo.remove([key] || [index Id])`
-  - **Description**: The method will just insert an object with the relevant key and value pair as used in your template.
+  - **Description**: The method would use either the key value of the pair to remove or use the index id to remove an array item.
   - **Parameters**:
-    - **key** (_Type: String_): The key of the array you wish to remove.
-    - **Index Id** (_Type: Integer_): The array Id you wish to remove.
-
+    - **key**: The key of the array you wish to remove.
+    - **Index Id**: The array Id you wish to remove.
 - `$.scope.toDo.shift()`
   - **Description**: The method works the same as regular arrays.
-
 - `$.scope.toDo.loop()`
-  - **Description**: The method will take the last value of the array and insert it as the first key-value pair of the array.
+  - **Description**: The method takes the 0th item of an array and adds it as the last item of the array.
+- `$.scope.toDo.loopUp()`
+  - **Description**: The method does the opposite of loop(). 
+- `$.scope.toDo.indexOf()`
+  - **Description**:  The method will return the array index number of the matching element or array id. Mostly used for internals usage.
+    - **Parameters**:
+    - **key**: The key of the array you wish to get the id of.
+    - **Value**: The value of the key pair you wish to get the id of.
 
-
-<!-- not valid anymore to rewrite -->
-
-<!-- * `$scope.toDo.__index` is the propriety that defines the object key to use an the index. If this is set, a string can be used in place of a number for any index reference. -->
 
 ## Credits
 
@@ -95,7 +92,6 @@ $.scope.toDo.push({
 - Big thanks to [Derek Hu](https://github.com/derek-dchu) for creating NPM and bower package, and other general house keeping.
 - Also, thanks to [Raja Kapur](https://github.com/aonic) for advice and guidance.
 
-The repeat object can take many methods used for arrays, as arrays are the internal data structure.
 
 - `$.scope.toDo.splice(index [,howMany] [,ToAdd])` functions exactly as a regular array with notable difference. If the index propriety is set a string can be passed as the value of the index.
 - **index** _Type: Number or String_
@@ -106,15 +102,7 @@ The repeat object can take many methods used for arrays, as arrays are the inter
   This is the array of repeat objects to add. If there are none to this is not required.
 - **returns** _Type: Array_
   This function will return an array of deleted elements.
-- `$.scope.toDo.pop()` Will remove and return the last element in the repeat array
-- `$.scope.toDo.reverse()` Will reverse the repeat array by index number.todo: if .index is a number, will use that. Returns the newly formated array.
-- `$.scope.toDo.shift()` works the same as regular arrays.
-- `$.scope.toDo.loop()` will take the last value and insert in the front. `toDo.loopUp()` does the opposite. Returns the newly formated array.
-- `$.scope.toDo.indexOf( key, value )` Returns the array index number of the matching element. Mostly used for internals.
-  - **key** _Type: String_
-    The key element to match.
-  - **value** _Type: String_
-    The value of the matching element.
+
 - `$.scope.toDo.update( key, [value,] update)` Updates selected value with new data. The selection process is done by matching key, value pairs from the existing objects,
   - **key** _Type: String or Number_
     The key or index to the matching element to update
@@ -122,5 +110,6 @@ The repeat object can take many methods used for arrays, as arrays are the inter
     The value of the matching key to the element to be update.If the index number will be used, must be ommited!
   - **update** _Type: Object_
     This is the object that will be applied to the matching element.
+    
 - `$.scope.toDo.__put` is the function that will run when a element is being inserted. This must be a function and must include this.show(), or some other way of un-hiding 'this'.
 - `$.scope.toDo.__take` is the function that will run when an element is being removed. This must be a function and include this.remove() or some other way to remove 'this'.

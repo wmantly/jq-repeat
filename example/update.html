@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- need to load jq-query cdn or file. -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+<!-- need to load mustache cdn or file. -->
+<script src="
+https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js
+"></script>
+
+<!-- need to load jq-repeat cdn or file -->
+<script src="https://718it.codeland.us/static/lib/js/jq-repeat_new.js"></script>
+<script>
+    //on document ready. the logic would execute.
+    $(document).ready(function () {
+        $.scope.toDo.push({ item: "Get milk",  done: "Yes" });
+        $.scope.toDo.push({ item: "Do laundry", done: "No" });
+
+
+    });
+
+
+</script>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+</head>
+
+<body>
+    <ul>
+        <!-- Simply add a `jq-repeat` attribute with a unique value for the reference name for that template, in this case `toDo`.  -->
+        <!-- jq-repeat-index is set which is the propriety that defines the object key to use an the index. If this is set, a string can be used in place of a number for any index reference. -->
+        <li jq-repeat="toDo" jq-repeat-index="item"><span class="item">{{ item }}</span>: {{ done }}</li> 
+    </ul>
+</body>
+
+</html>
+
+
