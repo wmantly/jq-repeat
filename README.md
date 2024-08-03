@@ -63,8 +63,8 @@ $.scope.toDo.push({
 - `$.scope.toDo.push([object])` The method will just insert object with the relevent key and value pair as used in your template.
 - **object** _Type: Object_
   Object with Key and Value in HTML Template.
-- `$.scope.toDo.pop()` The method will remove and return the last element in the repeat array.
-- `$.scope.toDo.reverse()` The method will reverse the repeat array by index number.todo: if index is a number, it will use that and will return the newly formated array.
+  - `$.scope.toDo.pop()` The method will remove and return the last element in the repeat array.
+  - `$.scope.toDo.reverse()` The method will reverse the repeat array by index number.todo: if index is a number, it will use that and will return the newly formated array.
 - `$.scope.toDo.remove([key] || [index Id])` The method will just insert object with the relevent key and value pair as used in your template.
 - **key** _Type: String_
   The key of the array you wish to remove.
