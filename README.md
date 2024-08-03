@@ -60,18 +60,30 @@ $.scope.toDo.push({
 
 ## Methods
 
-- `$.scope.toDo.push([object])` The method will just insert object with the relevent key and value pair as used in your template.
-- **object** _Type: Object_
-  Object with Key and Value in HTML Template.
-  - `$.scope.toDo.pop()` The method will remove and return the last element in the repeat array.
-  - `$.scope.toDo.reverse()` The method will reverse the repeat array by index number.todo: if index is a number, it will use that and will return the newly formated array.
-- `$.scope.toDo.remove([key] || [index Id])` The method will just insert object with the relevent key and value pair as used in your template.
-- **key** _Type: String_
-  The key of the array you wish to remove.
-- **Index Id** _Type: Integer_
-  The array Id you wish to remove.
-- `$.scope.toDo.shift()` The method works the same as regular arrays.
-- `$.scope.toDo.loop()` The method will take the last value of the array and insert in as the first key value pair of the array.
+- `$.scope.toDo.push([object])`
+  - **Description**: The method will just insert an object with the relevant key and value pair as used in your template.
+  - **Parameter**:
+    - **object** (_Type: Object_): Object with key and value in the HTML template.
+
+- `$.scope.toDo.pop()`
+  - **Description**: The method will remove and return the last element in the repeat array.
+
+- `$.scope.toDo.reverse()`
+  - **Description**: The method will reverse the repeat array by index number. 
+  - **Note**: If the index is a number, it will use that and will return the newly formatted array.
+
+- `$.scope.toDo.remove([key] || [index Id])`
+  - **Description**: The method will just insert an object with the relevant key and value pair as used in your template.
+  - **Parameters**:
+    - **key** (_Type: String_): The key of the array you wish to remove.
+    - **Index Id** (_Type: Integer_): The array Id you wish to remove.
+
+- `$.scope.toDo.shift()`
+  - **Description**: The method works the same as regular arrays.
+
+- `$.scope.toDo.loop()`
+  - **Description**: The method will take the last value of the array and insert it as the first key-value pair of the array.
+
 
 <!-- not valid anymore to rewrite -->
 
