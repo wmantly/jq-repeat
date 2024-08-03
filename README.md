@@ -2,6 +2,7 @@
 
 Author William Mantly Jr <wmantly@gmail.com>
 
+
 A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. Simple, quick and powerful templating. It is modeled after ng-repeat and shares some basic syntax, but is not a clone.
 
 - To do list [demo](http://jsfiddle.net/wmantly/nLj6nr4q/)
@@ -11,15 +12,8 @@ A simple, yet highly customizable plugin to handle all of you're client-side rep
 
 - **jq-repeat requires [jQuery](http://jquery.com/) 1.x/2.x/3.x and [Mustache](https://github.com/janl/mustache.js) 1.x/2.x/3.x/4.x to run**.
 
-<!-- ## Documentation
-
-| link | description |
-|---|---|
-|[tutorial](tutorial.md) | Begin with Node.js and mineflayer |
-| [FAQ.md](FAQ.md) | Got a question ? go there first |
-| **[api.md](api.md)** <br/>[unstable_api.md](unstable_api.md) | The full API reference |
-| [history.md](history.md) | The changelog for mineflayer |
-| [examples/](https://github.com/PrismarineJS/mineflayer/tree/master/examples) | Checkout all the mineflayer examples | -->
+## Examples
+[examples/](https://github.com/wmantly/jq-repeat/tree/reworked-dev/example)
 
 ## Template
 
@@ -84,13 +78,20 @@ $.scope.toDo.push({
     - **Parameters**:
     - **key**: The key of the array you wish to get the id of.
     - **Value**: The value of the key pair you wish to get the id of.
-
+- `$.scope.toDo.update([key] || [index Id] , [Object])`
+  - **Description**: The method would use either the key value of the pair to update or use the index id to update the object key value pair.
+  - **Parameters**:
+    - **key**: The key of the array you wish to update.
+    - **Index Id**: The array Id you wish to update.
+    - **Object**: The object you wish to update the array with.
 
 ## Credits
 
 - Written by [William Mantly](https://github.com/wmantly)
 - Big thanks to [Derek Hu](https://github.com/derek-dchu) for creating NPM and bower package, and other general house keeping.
 - Also, thanks to [Raja Kapur](https://github.com/aonic) for advice and guidance.
+
+
 
 
 - `$.scope.toDo.splice(index [,howMany] [,ToAdd])` functions exactly as a regular array with notable difference. If the index propriety is set a string can be passed as the value of the index.
@@ -103,13 +104,5 @@ $.scope.toDo.push({
 - **returns** _Type: Array_
   This function will return an array of deleted elements.
 
-- `$.scope.toDo.update( key, [value,] update)` Updates selected value with new data. The selection process is done by matching key, value pairs from the existing objects,
-  - **key** _Type: String or Number_
-    The key or index to the matching element to update
-  - **value** _Type: String_
-    The value of the matching key to the element to be update.If the index number will be used, must be ommited!
-  - **update** _Type: Object_
-    This is the object that will be applied to the matching element.
-    
 - `$.scope.toDo.__put` is the function that will run when a element is being inserted. This must be a function and must include this.show(), or some other way of un-hiding 'this'.
 - `$.scope.toDo.__take` is the function that will run when an element is being removed. This must be a function and include this.remove() or some other way to remove 'this'.

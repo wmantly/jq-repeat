@@ -16,7 +16,7 @@ https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js
     $(document).ready(function () {
         $.scope.toDo.push({ item: "Get milk",  done: "Yes" });
         $.scope.toDo.push({ item: "Do laundry", done: "No" });
-
+        $.scope.toDo.update(1, { item: "Get Water",  done: "no" })
 
     });
 
