@@ -14,14 +14,15 @@ https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js
 <script>
     //on document ready. the logic would execute.
     $(document).ready(function () {
-        $.scope.toDo.push({ item: "Get milk",  done: "Yes" }); // 0 
+        $.scope.toDo.__setTake(function ($el, item, list) {
+             console.log($el) //refers to the DOM element which is <li>
+            // console.log(item) //each array key pair 
+            // console.log(list) //the toDo object
+            $el.remove()
+
+        })
+        $.scope.toDo.push({ item: "Get milk", done: "Yes" }); // 0 
         $.scope.toDo.push({ item: "Do laundry", done: "No" }); // 1
-        //update takes ([id or array key] , )
-        //amount to remove / delete could be 0.
-        //object if you have any to add
-        $.scope.toDo.splice("Get milk" , 0, { item: "Get Bread",  done: "Yes" })
-
-
     });
 
 
@@ -35,12 +36,8 @@ https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js
 
 <body>
     <ul>
-        <!-- Simply add a `jq-repeat` attribute with a unique value for the reference name for that template, in this case `toDo`.  -->
-        <!-- jq-repeat-index is set which is the propriety that defines the object key to use an the index. If this is set, a string can be used in place of a number for any index reference. -->
-        <li jq-repeat="toDo" jq-repeat-index="item"><span class="item">{{ item }}</span>: {{ done }}</li> 
+        <li jq-repeat="toDo" style="display:none;"><span class="item">{{ item }}</span>: {{ done }}</li>
     </ul>
 </body>
 
 </html>
-
-

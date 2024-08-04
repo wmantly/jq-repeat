@@ -85,17 +85,37 @@ $.scope.toDo.push({
     - **key**: The key of the array you wish to update.
     - **Index Id**: The array Id you wish to update.
     - **Object**: The object you wish to update the array with.
-
-    <!-- splice to be added here after wmantly address potential bug -->
+- `$.scope.toDo.splice()`
+  - **Description**: The method exactly as a regular array with notable difference. If the index propriety is set a string can be passed as the value of the index.
+  - **Parameters**:
+    - **Index**: The key of the array you wish to update or array id.
+    - **Amount**: TheNumber of repeat objects that will be removed. If there are non to be removed.
+    - **Object**: The object you wish to add to the array.
 - `$.scope.toDo.getByKey([key] || [index Id])`
   - **Description**: The method would use either the key value of the pair to get or use the index id to get an array item.
   - **Parameters**:
     - **key**: The key of the array you wish to get.
     - **Index Id**: The array Id you wish to get.
-
+- `$.scope.toDo.__setPut(function($el, item, list){ [logic of your code] })`
+  - **Description**: The method takes a callback function that will run when a element is being inserted. This must be a function and must include `$el.show()`, or some other way of un-hiding `$el`.
+  - **Parameters**:
+    - **$el**: refers to the DOM element or relevent HTML tag.
+    - **item**: refers to the each of the array key pair.
+    - **list**: refers to the jq-repeat attribute object array.
+- `$.scope.toDo.__setTake(function($el, item, list){ [logic of your code] })`
+  - **Description**: The method takes a callback function that will run when a element is being remove. This must be a function and must include `$el.show()`, or some other way of un-hiding `$el`.
+  - **Parameters**:
+    - **$el**: refers to the DOM element or relevent HTML tag.
+    - **item**: refers to the each of the array key pair.
+    - **list**: refers to the jq-repeat attribute object array.
+- `$.scope.toDo.__setUpdate(function($el, item, list){ [logic of your code] })`
+  - **Description**: The method takes a callback function that will run when a element is being updated. This must be a function and must include `$el.show()`, or some other way of un-hiding `$el`.
+  - **Parameters**:
+    - **$el**: refers to the DOM element or relevent HTML tag.
+    - **item**: refers to the each of the array key pair.
+    - **list**: refers to the jq-repeat attribute object array.
 
 ## Credits
-
 - Written by [William Mantly](https://github.com/wmantly)
 - Big thanks to [Derek Hu](https://github.com/derek-dchu) for creating NPM and bower package, and other general house keeping.
 - Thanks to [Ti Seng Lim](https://github.com/Newtbot) for updating the readme documentation and adding examples.
@@ -103,16 +123,3 @@ $.scope.toDo.push({
 
 
 
-
-- `$.scope.toDo.splice(index [,howMany] [,ToAdd])` functions exactly as a regular array with notable difference. If the index propriety is set a string can be passed as the value of the index.
-- **index** _Type: Number or String_
-  Index of element you wish to manipulate. If the .index property is set, you may pass a string to match to the index array.
-- **howMany** _Type: Number_
-  Number of repeat objects that will be removed. If there are non to be removed, it is not required to use this argument.
-- **update** _Type: Array_
-  This is the array of repeat objects to add. If there are none to this is not required.
-- **returns** _Type: Array_
-  This function will return an array of deleted elements.
-
-- `$.scope.toDo.__put` is the function that will run when a element is being inserted. This must be a function and must include this.show(), or some other way of un-hiding 'this'.
-- `$.scope.toDo.__take` is the function that will run when an element is being removed. This must be a function and include this.remove() or some other way to remove 'this'.

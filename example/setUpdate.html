@@ -14,22 +14,15 @@ https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js
 <script>
     //on document ready. the logic would execute.
     $(document).ready(function () {
-        $.scope.toDo.push({ item: "Get milk",  done: "Yes" });
-        $.scope.toDo.push({ item: "Do laundry", done: "No" });
+        $.scope.toDo.__setUpdate(function ($el, item, list) {
+             console.log($el) //refers to the DOM element which is <li>
+            // console.log(item) //each array key pair 
+            // console.log(list) //the toDo object
+            $el.show()
 
-        for ( let toDoObj of $.scope.toDo ){
-            console.log(toDoObj)
-            if (toDoObj.item.includes("Get milk"))
-            {
-                toDoObj.__jq_put("get Bread")
-                //hostObj.__jq_$el.show();
-                toDoObj.__jq_$el.show()
-            }
-            else {
-                toDoObj.__jq_$el.hide()
-            }
-        }
-
+        })
+        $.scope.toDo.push({ item: "Get milk", done: "Yes" }); // 0 
+        $.scope.toDo.push({ item: "Do laundry", done: "No" }); // 1
     });
 
 
@@ -43,12 +36,8 @@ https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js
 
 <body>
     <ul>
-        <!-- Simply add a `jq-repeat` attribute with a unique value for the reference name for that template, in this case `toDo`.  -->
-        <li jq-repeat="toDo" jq-repeat-index="item"><span class="item">{{ item }}</span>: {{ done }}</li> 
-
+        <li jq-repeat="toDo" style="display:none;"><span class="item">{{ item }}</span>: {{ done }}</li>
     </ul>
 </body>
 
 </html>
-
-
