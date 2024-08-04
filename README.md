@@ -13,7 +13,8 @@ A simple, yet highly customizable plugin to handle all of you're client-side rep
 - **jq-repeat requires [jQuery](http://jquery.com/) 1.x/2.x/3.x and [Mustache](https://github.com/janl/mustache.js) 1.x/2.x/3.x/4.x to run**.
 
 ## Examples
-[examples/](https://github.com/wmantly/jq-repeat/tree/reworked-dev/example)
+Some simple examples of each methods that can used.
+[examples](https://github.com/wmantly/jq-repeat/tree/reworked-dev/example)
 
 ## Template
 
@@ -85,10 +86,19 @@ $.scope.toDo.push({
     - **Index Id**: The array Id you wish to update.
     - **Object**: The object you wish to update the array with.
 
+    <!-- splice to be added here after wmantly address potential bug -->
+- `$.scope.toDo.getByKey([key] || [index Id])`
+  - **Description**: The method would use either the key value of the pair to get or use the index id to get an array item.
+  - **Parameters**:
+    - **key**: The key of the array you wish to get.
+    - **Index Id**: The array Id you wish to get.
+
+
 ## Credits
 
 - Written by [William Mantly](https://github.com/wmantly)
 - Big thanks to [Derek Hu](https://github.com/derek-dchu) for creating NPM and bower package, and other general house keeping.
+- Thanks to [Ti Seng Lim](https://github.com/Newtbot) for updating the readme documentation and adding examples.
 - Also, thanks to [Raja Kapur](https://github.com/aonic) for advice and guidance.
 
 
