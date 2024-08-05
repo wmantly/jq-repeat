@@ -14,7 +14,7 @@ A simple, yet highly customizable plugin to handle all of you're client-side rep
 
 ## Examples
 Some simple examples of each methods that can used.
-[examples](https://github.com/wmantly/jq-repeat/tree/reworked-dev/example)
+[examples](https://github.com/wmantly/jq-repeat/tree/master/example)
 
 ## Template
 
