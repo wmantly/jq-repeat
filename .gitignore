@@ -30,4 +30,8 @@ node_modules
 
 bower_components
 
+# NPM package tarballs
+*.tgz
 
+# Lock files
+package-lock.json

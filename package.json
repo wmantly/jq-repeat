@@ -1,44 +1,67 @@
 {
   "name": "jq-repeat",
-  "version": "1.0.0",
-  "description": "A simple, yet highly customizable plugin to handle all of you're client-side repetitive DOM needs. ",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "A simple, yet highly customizable jQuery plugin for dynamic DOM templating with Mustache. Supports automatic sorting, nested templates, and custom index keys.",
+  "main": "dist/js/jq-repeat.js",
+  "browser": "dist/js/jq-repeat.min.js",
+  "files": [
+    "dist/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
   "keywords": [
     "dom",
     "jquery",
-    "mustache"
+    "mustache",
+    "template",
+    "repeat",
+    "templating",
+    "jquery-plugin",
+    "dynamic-lists",
+    "data-binding"
   ],
   "author": {
-      "name": "William Mantly",
-      "email": "wmantly@gmail.com"
-    },
+    "name": "William Mantly",
+    "email": "wmantly@gmail.com"
+  },
   "contributors": [
     {
       "name": "Derek Hu",
-      "email": "<derek.dchu@gmail.com>"
+      "email": "derek.dchu@gmail.com"
     }
   ],
-  "private": true,
   "scripts": {
-    "test": "gulp test"
+    "build": "rollup -c",
+    "test": "mocha",
+    "prepublishOnly": "npm run build && npm test"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "gulp": "^3.8.10",
-    "gulp-concat": "^2.4.3",
-    "gulp-jshint": "^1.9.0",
-    "gulp-notify": "^2.1.0",
-    "gulp-qunit": "^1.2.1",
-    "gulp-rename": "^1.2.0",
-    "gulp-uglify": "^1.0.2",
-    "run-sequence": "^1.0.2"
+  "peerDependencies": {
+    "jquery": ">=3.0.0",
+    "mustache": ">=4.0.0"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/wmantly/jq-repeat/"
+    "url": "https://github.com/wmantly/jq-repeat.git"
   },
   "bugs": {
-    "url": "http://github.com/wmantly/jq-repeat/issues",
+    "url": "https://github.com/wmantly/jq-repeat/issues",
     "email": "wmantly@gmail.com"
+  },
+  "homepage": "https://github.com/wmantly/jq-repeat#readme",
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "chai": "^4.3.4",
+    "global-jsdom": "^27.0.0",
+    "jquery": "^3.7.1",
+    "jsdom": "^27.3.0",
+    "mocha": "^10.2.0",
+    "mustache": "^4.2.0",
+    "rollup": "^4.54.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
