@@ -42,6 +42,19 @@
                     <p>Use standard array methods: push, pop, splice, and more</p>
                 </div>
             </div>
+
+            <div class="info-boxes">
+                <div class="info-box license-box">
+                    <h3>📜 Open Source - MIT License</h3>
+                    <p>Free to use in any project, commercial or personal. No restrictions, no attribution required.</p>
+                    <a href="https://github.com/wmantly/jq-repeat/blob/master/LICENSE" target="_blank" class="btn btn-secondary">View License</a>
+                </div>
+                <div class="info-box docs-box">
+                    <h3>📖 Full Documentation on GitHub</h3>
+                    <p>Complete API reference, examples, and guides available in the repository.</p>
+                    <a href="https://github.com/wmantly/jq-repeat#readme" target="_blank" class="btn btn-secondary">Read Docs</a>
+                </div>
+            </div>
         </section>
 
         <section id="installation">
@@ -54,8 +67,8 @@
         </section>
 
         <section id="demo-basic" class="demo-section">
-            <h2>Basic Todo List</h2>
-            <p>Click "Add Task" to see items automatically rendered in the DOM. Use the buttons below to interact with the list.</p>
+            <h2>Interactive Todo List with Edit & Done</h2>
+            <p>Add tasks, mark them as done, edit them, or remove them. This shows real-world CRUD operations with jq-repeat.</p>
 
             <div class="demo-container">
                 <div class="demo-controls">
@@ -65,9 +78,13 @@
                 </div>
 
                 <ul id="todo-list-1" class="result-area">
-                    <li jq-repeat="todos1">
-                        <span class="todo-item">{{ task }}</span>
-                        <button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button>
+                    <li jq-repeat="todos1" class="todo-item-row {{ doneClass }}">
+                        <span class="todo-text">{{ task }}</span>
+                        <div class="todo-actions">
+                            {{{ doneButton }}}
+                            <button class="btn-sm btn-edit" onclick="editTodo1(this)">Edit</button>
+                            <button class="btn-sm btn-remove" onclick="$(this).scopeItemRemove()">Remove</button>
+                        </div>
                     </li>
                 </ul>
             </div>
@@ -75,16 +92,31 @@
             <details class="code-example">
                 <summary>View Code</summary>
                 <pre><code class="language-html">&lt;ul&gt;
-    &lt;li jq-repeat="todos"&gt;
+    &lt;li jq-repeat="todos" class="{{ doneClass }}"&gt;
         &lt;span&gt;{{ task }}&lt;/span&gt;
+        {{{ doneButton }}}
+        &lt;button onclick="editTodo(this)"&gt;Edit&lt;/button&gt;
         &lt;button onclick="$(this).scopeItemRemove()"&gt;Remove&lt;/button&gt;
     &lt;/li&gt;
 &lt;/ul&gt;</code></pre>
-                <pre><code class="language-javascript">// Add items to the list
-$.scope.todos.push({ task: 'Buy groceries' });
-$.scope.todos.push({ task: 'Walk the dog' });
+                <pre><code class="language-javascript">// Add a task with done button
+$.scope.todos.push({
+    task: 'Buy groceries',
+    done: false,
+    doneButton: '&lt;button onclick="markDone(this)"&gt;Done&lt;/button&gt;',
+    doneClass: ''
+});
 
-// Items are automatically rendered!</code></pre>
+// Mark as done
+function markDone(btn) {
+    const item = $(btn).scopeItem();
+    const index = $(btn).scopeGetEl().attr('jq-repeat-index');
+    $.scope.todos.update(Number(index), {
+        done: true,
+        doneButton: '&lt;button class="done"&gt;✓&lt;/button&gt;',
+        doneClass: 'done'
+    });
+}</code></pre>
             </details>
         </section>
 
@@ -265,6 +297,50 @@ $.get('https://www.reddit.com/.json', function (data) {
 
 // That's it! Items automatically render as they're added.</code></pre>
             </details>
+        </section>
+
+        <section id="full-docs" class="demo-section">
+            <h2>📚 Full Documentation</h2>
+            <p>Want to learn more? Check out the complete documentation on GitHub with detailed API references, advanced examples, and integration guides.</p>
+
+            <div class="docs-grid">
+                <div class="docs-card">
+                    <h3>🔧 API Reference</h3>
+                    <p>Complete list of all methods, properties, and options</p>
+                    <ul>
+                        <li>Array Methods (push, pop, splice, etc.)</li>
+                        <li>Helper Methods (update, remove, getByKey, etc.)</li>
+                        <li>jQuery Helpers (scopeGet, scopeItem, etc.)</li>
+                        <li>Customization Hooks (__put, __take, __putUpdate)</li>
+                    </ul>
+                </div>
+                <div class="docs-card">
+                    <h3>⚙️ Configuration</h3>
+                    <p>Learn about all configuration options</p>
+                    <ul>
+                        <li>Custom Index Keys (jq-index-key)</li>
+                        <li>Automatic Sorting (jr-order-by, jr-order-reverse)</li>
+                        <li>Nested Templates</li>
+                        <li>Template Variables (_parent, _index, _list)</li>
+                    </ul>
+                </div>
+                <div class="docs-card">
+                    <h3>💡 Examples</h3>
+                    <p>More real-world examples and use cases</p>
+                    <ul>
+                        <li>Todo List with localStorage</li>
+                        <li>Reddit Feed Browser</li>
+                        <li>Data Tables with Sorting</li>
+                        <li>Nested Data Structures</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="docs-cta">
+                <a href="https://github.com/wmantly/jq-repeat#readme" target="_blank" class="btn btn-primary btn-large">
+                    Read Full Documentation on GitHub →
+                </a>
+            </div>
         </section>
 
     </main>

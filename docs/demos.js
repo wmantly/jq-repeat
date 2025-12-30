@@ -7,11 +7,26 @@ $(document).ready(function() {
 });
 
 function initAllTodos() {
-    // Demo 1: Basic todo list
+    // Demo 1: Advanced todo list with edit/done
     $.scope.todos1.push(
-        { task: 'Buy groceries' },
-        { task: 'Walk the dog' },
-        { task: 'Finish project report' }
+        {
+            task: 'Buy groceries',
+            done: false,
+            doneButton: '<button class="btn-sm btn-done" onclick="markDone1(this)">Done</button>',
+            doneClass: ''
+        },
+        {
+            task: 'Walk the dog',
+            done: false,
+            doneButton: '<button class="btn-sm btn-done" onclick="markDone1(this)">Done</button>',
+            doneClass: ''
+        },
+        {
+            task: 'Finish project report',
+            done: false,
+            doneButton: '<button class="btn-sm btn-done" onclick="markDone1(this)">Done</button>',
+            doneClass: ''
+        }
     );
 
     // Demo 2: Sorted todo list
@@ -49,19 +64,44 @@ function initAllTodos() {
     updateTodoLength();
 }
 
-// ===== DEMO 1: BASIC TODO LIST =====
+// ===== DEMO 1: ADVANCED TODO LIST WITH EDIT/DONE =====
 
 function addTodo1() {
     const input = $('#todo-input-1');
     const task = input.val().trim();
     if (task) {
-        $.scope.todos1.push({ task: task });
+        $.scope.todos1.push({
+            task: task,
+            done: false,
+            doneButton: '<button class="btn-sm btn-done" onclick="markDone1(this)">Done</button>',
+            doneClass: ''
+        });
         input.val('');
     }
 }
 
 function clearTodos1() {
     $.scope.todos1.empty();
+}
+
+function markDone1(button) {
+    const $el = $(button).scopeGetEl();
+    const index = Number($el.attr('jq-repeat-index'));
+
+    $.scope.todos1.update(index, {
+        done: true,
+        doneButton: '<button class="btn-sm done">✓</button>',
+        doneClass: 'done'
+    });
+}
+
+function editTodo1(button) {
+    const $el = $(button).scopeGetEl();
+    const index = Number($el.attr('jq-repeat-index'));
+    const item = $.scope.todos1.splice(index, 1)[0];
+
+    // Put the task text back in the input
+    $('#todo-input-1').val(item.task).focus();
 }
 
 $(document).on('keypress', '#todo-input-1', function(e) {

@@ -161,6 +161,51 @@ h4 {
     margin-bottom: 10px;
 }
 
+/* Info Boxes */
+.info-boxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.info-box {
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.license-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.docs-box {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.info-box h3 {
+    color: white;
+    margin-bottom: 15px;
+}
+
+.info-box p {
+    margin-bottom: 20px;
+    opacity: 0.95;
+}
+
+.info-box .btn-secondary {
+    background: white;
+    color: #667eea;
+    border: none;
+}
+
+.info-box .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
 /* Code Examples */
 pre {
     background: #2d2d2d;
@@ -261,6 +306,62 @@ input:focus {
 
 .todo-item {
     flex: 1;
+}
+
+/* Advanced Todo Styling */
+.todo-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.todo-item-row.done .todo-text {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.todo-text {
+    flex: 1;
+    font-size: 1em;
+}
+
+.todo-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-edit {
+    background: #2196f3;
+}
+
+.btn-edit:hover {
+    background: #0b7dda;
+}
+
+.btn-remove {
+    background: #f44336;
+}
+
+.btn-remove:hover {
+    background: #da190b;
+}
+
+.btn-done {
+    background: #4caf50;
+}
+
+.btn-done:hover {
+    background: #45a049;
+}
+
+button.done {
+    background: #4caf50;
+    cursor: default;
+}
+
+button.done:hover {
+    background: #4caf50;
+    transform: none;
 }
 
 /* Product Cards */
@@ -491,6 +592,59 @@ select {
 select:focus {
     outline: none;
     border-color: #667eea;
+}
+
+/* Docs Section */
+.docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.docs-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.docs-card:hover {
+    border-color: #667eea;
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.docs-card h3 {
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.docs-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 0 0;
+}
+
+.docs-card li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    color: #666;
+}
+
+.docs-card li:last-child {
+    border-bottom: none;
+}
+
+.docs-cta {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.btn-large {
+    font-size: 1.2em;
+    padding: 15px 40px;
 }
 
 /* Footer */

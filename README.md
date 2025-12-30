@@ -2,8 +2,7 @@
 
 A simple, yet highly customizable jQuery plugin to handle all of your client-side repetitive DOM needs. Simple, quick and powerful templating using Mustache syntax. Modeled after ng-repeat with automatic DOM synchronization.
 
-* To do list [demo](http://jsfiddle.net/wmantly/nLj6nr4q/)
-* Reddit JSON feed [demo](http://jsfiddle.net/wmantly/sge3zr28/)
+**[View Interactive Demos](https://wmantly.github.io/jq-repeat/)** - See jq-repeat in action with live examples!
 
 ## Requirements
 
