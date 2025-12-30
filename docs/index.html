@@ -222,13 +222,10 @@ $.scope.todos.splice(1, 1);                  // Remove at index 1
                     <ul class="reddit-list">
                         <li class="reddit-card" jq-repeat="reddit">
                             <div class="reddit-score">{{ score }}</div>
-                            <div class="reddit-thumbnail">
-                                <a href="{{ url }}" target="_blank">
-                                    <img src="{{ thumbnailUrl }}" alt="thumbnail"/>
-                                </a>
-                            </div>
                             <div class="reddit-content">
-                                <h4 class="reddit-title">{{ title }}</h4>
+                                <h4 class="reddit-title">
+                                    <a href="{{ url }}" target="_blank">{{ title }}</a>
+                                </h4>
                                 <div class="reddit-meta">
                                     <span class="reddit-author">by {{ author }}</span>
                                     <a href="https://reddit.com{{ permalink }}" target="_blank" class="reddit-comments">
@@ -245,18 +242,17 @@ $.scope.todos.splice(1, 1);                  // Remove at index 1
                 <summary>View Code</summary>
                 <pre><code class="language-html">&lt;ul&gt;
     &lt;li jq-repeat="reddit"&gt;
-        &lt;div&gt;{{ score }}&lt;/div&gt;
-        &lt;div&gt;
-            &lt;a href="{{ url }}" target="_blank"&gt;
-                &lt;img src="{{ thumbnail }}" alt="thumbnail"/&gt;
-            &lt;/a&gt;
-        &lt;/div&gt;
-        &lt;div&gt;
-            &lt;h4&gt;{{ title }}&lt;/h4&gt;
-            &lt;span&gt;by {{ author }}&lt;/span&gt;
-            &lt;a href="https://reddit.com{{ permalink }}" target="_blank"&gt;
-                {{ num_comments }} comments
-            &lt;/a&gt;
+        &lt;div class="reddit-score"&gt;{{ score }}&lt;/div&gt;
+        &lt;div class="reddit-content"&gt;
+            &lt;h4&gt;
+                &lt;a href="{{ url }}" target="_blank"&gt;{{ title }}&lt;/a&gt;
+            &lt;/h4&gt;
+            &lt;div&gt;
+                &lt;span&gt;by {{ author }}&lt;/span&gt;
+                &lt;a href="https://reddit.com{{ permalink }}" target="_blank"&gt;
+                    {{ num_comments }} comments
+                &lt;/a&gt;
+            &lt;/div&gt;
         &lt;/div&gt;
     &lt;/li&gt;
 &lt;/ul&gt;</code></pre>
