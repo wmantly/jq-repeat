@@ -195,7 +195,18 @@ function loadReddit() {
 
             if (data && data.data && data.data.children) {
                 data.data.children.forEach(function (post) {
-                    $.scope.reddit.push(post.data);
+                    const postData = post.data;
+
+                    // Process thumbnail - only use if it's a valid HTTP/HTTPS URL
+                    const thumb = postData.thumbnail;
+                    if (thumb && thumb.startsWith('http')) {
+                        postData.thumbnailUrl = thumb;
+                    } else {
+                        // Use a data URI placeholder instead of external URL
+                        postData.thumbnailUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAiIGhlaWdodD0iNzAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjcwIiBoZWlnaHQ9IjcwIiBmaWxsPSIjZTBlMGUwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                    }
+
+                    $.scope.reddit.push(postData);
                 });
             }
         },

@@ -205,14 +205,9 @@ $.scope.todos.splice(1, 1);                  // Remove at index 1
             <h2>Real-World Example - Reddit Feed</h2>
             <p>Fetch data from Reddit's JSON API and automatically render it. This shows how jq-repeat works with real external data.</p>
 
-            <p class="info" style="background: #fff3cd; border-left-color: #ffc107;">
-                ⚠️ Note: This demo may not work due to CORS restrictions on GitHub Pages.
-                <a href="http://jsfiddle.net/wmantly/sge3zr28/" target="_blank" style="color: #667eea; font-weight: bold;">View working version on JSFiddle →</a>
-            </p>
-
             <div class="demo-container">
                 <div class="demo-controls">
-                    <button onclick="loadReddit()">Try Loading Reddit Posts</button>
+                    <button onclick="loadReddit()">Load Reddit Posts</button>
                     <button onclick="clearReddit()">Clear</button>
                     <select id="subreddit-select">
                         <option value="">r/popular</option>
@@ -229,7 +224,7 @@ $.scope.todos.splice(1, 1);                  // Remove at index 1
                             <div class="reddit-score">{{ score }}</div>
                             <div class="reddit-thumbnail">
                                 <a href="{{ url }}" target="_blank">
-                                    <img src="{{ thumbnail }}" alt="thumbnail" onerror="this.src='https://via.placeholder.com/70x70?text=No+Image'"/>
+                                    <img src="{{ thumbnailUrl }}" alt="thumbnail"/>
                                 </a>
                             </div>
                             <div class="reddit-content">
