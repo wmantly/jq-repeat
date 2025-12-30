@@ -165,4 +165,33 @@ describe('Custom Index Keys', function () {
       }, 150);
     }, 100);
   });
+
+  it('should support getByKey with single argument using default index key', function (done) {
+    $('<div jq-repeat="items" jq-index-key="itemId">{{ name }}</div>').appendTo('body');
+
+    setTimeout(() => {
+      $.scope.items.push({ itemId: 'item1', name: 'First Item' });
+      $.scope.items.push({ itemId: 'item2', name: 'Second Item' });
+      $.scope.items.push({ itemId: 'item3', name: 'Third Item' });
+
+      setTimeout(() => {
+        try {
+          // Test getByKey with single argument (should use default index key)
+          const item = $.scope.items.getByKey('item2');
+          expect(item).to.exist;
+          expect(item.name).to.equal('Second Item');
+          expect(item.itemId).to.equal('item2');
+
+          // Also test with two arguments to ensure it still works
+          const item3 = $.scope.items.getByKey('itemId', 'item3');
+          expect(item3).to.exist;
+          expect(item3.name).to.equal('Third Item');
+
+          done();
+        } catch (error) {
+          done(error);
+        }
+      }, 150);
+    }, 100);
+  });
 });

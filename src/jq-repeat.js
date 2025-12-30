@@ -726,8 +726,8 @@ class CallbackQueue {
 			return $render;
 		}
 
-		getByKey(key, value) {
-			return this[this.indexOf(key, value)];
+		getByKey(...args) {
+			return this[this.indexOf(...args)];
 		}
 
 		// --- User-definable Helper Methods ---
