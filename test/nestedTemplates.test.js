@@ -1,10 +1,12 @@
 import './setup.js';
 import { expect } from 'chai';
+import { cleanupScopes } from './setup.js';
 import '../src/jq-repeat.js';
 
 describe('Nested Templates', function () {
   beforeEach(function() {
     document.body.innerHTML = '';
+    cleanupScopes();
   });
 
   it.skip('should support nested jq-repeat templates (auto-populate not implemented)', function (done) {

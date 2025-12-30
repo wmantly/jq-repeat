@@ -1,10 +1,12 @@
 import './setup.js';
 import { expect } from 'chai';
+import { cleanupScopes } from './setup.js';
 import '../src/jq-repeat.js';
 
 describe('jQuery Helper Methods', function () {
   beforeEach(function() {
     document.body.innerHTML = '';
+    cleanupScopes();
   });
 
   it('should get scope using scopeGet()', function (done) {

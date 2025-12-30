@@ -1,10 +1,12 @@
 import './setup.js';
 import { expect } from 'chai';
+import { cleanupScopes } from './setup.js';
 import '../src/jq-repeat.js';
 
 describe('Custom Index Keys', function () {
   beforeEach(function() {
     document.body.innerHTML = '';
+    cleanupScopes();
   });
 
   it('should use custom index key for element identification', function (done) {
