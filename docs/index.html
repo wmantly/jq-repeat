@@ -41,18 +41,13 @@
                     <h3>📦 Array Methods</h3>
                     <p>Use standard array methods: push, pop, splice, and more</p>
                 </div>
-            </div>
-
-            <div class="info-boxes">
-                <div class="info-box license-box">
-                    <h3>📜 Open Source - MIT License</h3>
-                    <p>Free to use in any project, commercial or personal. No restrictions, no attribution required.</p>
-                    <a href="https://github.com/wmantly/jq-repeat/blob/master/LICENSE" target="_blank" class="btn btn-secondary">View License</a>
+                <div class="feature">
+                    <h3>📜 MIT License</h3>
+                    <p>Free to use in any project, commercial or personal</p>
                 </div>
-                <div class="info-box docs-box">
-                    <h3>📖 Full Documentation on GitHub</h3>
-                    <p>Complete API reference, examples, and guides available in the repository.</p>
-                    <a href="https://github.com/wmantly/jq-repeat#readme" target="_blank" class="btn btn-secondary">Read Docs</a>
+                <div class="feature">
+                    <h3>📖 Full Documentation</h3>
+                    <p>Complete API reference and examples on GitHub</p>
                 </div>
             </div>
         </section>
@@ -92,48 +87,70 @@
             <details class="code-example">
                 <summary>View Code</summary>
                 <pre><code class="language-html">&lt;ul&gt;
-    &lt;li jq-repeat="todos" class="{{ doneClass }}"&gt;
-        &lt;span&gt;{{ task }}&lt;/span&gt;
-        {{{ doneButton }}}
-        &lt;button onclick="editTodo(this)"&gt;Edit&lt;/button&gt;
-        &lt;button onclick="$(this).scopeItemRemove()"&gt;Remove&lt;/button&gt;
+    &lt;li jq-repeat="todos1" class="todo-item-row {{ doneClass }}"&gt;
+        &lt;span class="todo-text"&gt;{{ task }}&lt;/span&gt;
+        &lt;div class="todo-actions"&gt;
+            {{{ doneButton }}}
+            &lt;button class="btn-sm btn-edit" onclick="editTodo1(this)"&gt;Edit&lt;/button&gt;
+            &lt;button class="btn-sm btn-remove" onclick="$(this).scopeItemRemove()"&gt;Remove&lt;/button&gt;
+        &lt;/div&gt;
     &lt;/li&gt;
 &lt;/ul&gt;</code></pre>
                 <pre><code class="language-javascript">// Add a task with done button
-$.scope.todos.push({
+$.scope.todos1.push({
     task: 'Buy groceries',
     done: false,
-    doneButton: '&lt;button onclick="markDone(this)"&gt;Done&lt;/button&gt;',
+    doneButton: '&lt;button class="btn-sm btn-done" onclick="markDone1(this)"&gt;Done&lt;/button&gt;',
     doneClass: ''
 });
 
 // Mark as done
-function markDone(btn) {
-    const item = $(btn).scopeItem();
-    const index = $(btn).scopeGetEl().attr('jq-repeat-index');
-    $.scope.todos.update(Number(index), {
+function markDone1(button) {
+    const $el = $(button).scopeGetEl();
+    const index = Number($el.attr('jq-repeat-index'));
+    $.scope.todos1.update(index, {
         done: true,
-        doneButton: '&lt;button class="done"&gt;✓&lt;/button&gt;',
+        doneButton: '&lt;button class="btn-sm done"&gt;✓&lt;/button&gt;',
         doneClass: 'done'
     });
+}
+
+// Edit a task
+function editTodo1(button) {
+    const $el = $(button).scopeGetEl();
+    const index = Number($el.attr('jq-repeat-index'));
+    const item = $.scope.todos1.splice(index, 1)[0];
+    $('#todo-input-1').val(item.task).focus();
 }</code></pre>
             </details>
         </section>
 
         <section id="demo-sorting" class="demo-section">
             <h2>Automatic Sorting</h2>
-            <p>Items are automatically inserted in sorted order using <code>jr-order-by</code>. Try adding tasks - they'll appear alphabetically!</p>
+            <p>Items are automatically inserted in sorted order using <code>jr-order-by</code>. Try adding tasks with different priorities - they'll be sorted by priority!</p>
 
             <div class="demo-container">
                 <div class="demo-controls">
                     <input type="text" id="todo-input-2" placeholder="Enter a task..." value="">
+                    <select id="priority-select-2">
+                        <option value="1">Priority 1 (Highest)</option>
+                        <option value="2">Priority 2</option>
+                        <option value="3">Priority 3</option>
+                        <option value="4">Priority 4</option>
+                        <option value="5" selected>Priority 5</option>
+                        <option value="6">Priority 6</option>
+                        <option value="7">Priority 7</option>
+                        <option value="8">Priority 8</option>
+                        <option value="9">Priority 9</option>
+                        <option value="10">Priority 10 (Lowest)</option>
+                    </select>
                     <button onclick="addTodo2()">Add Task</button>
                     <button onclick="clearTodos2()">Clear All</button>
                 </div>
 
                 <ul id="todo-list-2" class="result-area">
-                    <li jq-repeat="todos2" jr-order-by="task">
-                        <span class="todo-item">{{ task }}</span>
+                    <li jq-repeat="todos2" jr-order-by="priority">
+                        <span class="todo-item"><strong>P{{ priority }}</strong> - {{ task }}</span>
                         <button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button>
                     </li>
                 </ul>
@@ -142,14 +159,14 @@ function markDone(btn) {
             <details class="code-example">
                 <summary>View Code</summary>
                 <pre><code class="language-html">&lt;!-- Just add jr-order-by attribute --&gt;
-&lt;li jq-repeat="todos" jr-order-by="task"&gt;
-    &lt;span&gt;{{ task }}&lt;/span&gt;
+&lt;li jq-repeat="todos2" jr-order-by="priority"&gt;
+    &lt;span&gt;&lt;strong&gt;P{{ priority }}&lt;/strong&gt; - {{ task }}&lt;/span&gt;
     &lt;button onclick="$(this).scopeItemRemove()"&gt;Remove&lt;/button&gt;
 &lt;/li&gt;</code></pre>
-                <pre><code class="language-javascript">// Items are now automatically inserted in sorted order!
-$.scope.todos.push({ task: 'Zebra task' });
-$.scope.todos.push({ task: 'Apple task' });
-// 'Apple task' will appear before 'Zebra task'</code></pre>
+                <pre><code class="language-javascript">// Items are automatically inserted in sorted order by priority!
+$.scope.todos2.push({ task: 'Low priority task', priority: 10 });
+$.scope.todos2.push({ task: 'High priority task', priority: 1 });
+// High priority (1) will appear before low priority (10)</code></pre>
             </details>
         </section>
 
@@ -176,12 +193,12 @@ $.scope.todos.push({ task: 'Apple task' });
             <details class="code-example">
                 <summary>View Code</summary>
                 <pre><code class="language-javascript">// Fade in when items are added
-$.scope.todos.__put = function($el, item, list) {
+$.scope.todos3.__put = function($el, item, list) {
     $el.hide().fadeIn(300);
 };
 
 // Fade out when items are removed
-$.scope.todos.__take = function($el, item, list) {
+$.scope.todos3.__take = function($el, item, list) {
     $el.fadeOut(300, function() {
         $(this).remove();
     });
@@ -222,12 +239,12 @@ $.scope.todos.__take = function($el, item, list) {
             <details class="code-example">
                 <summary>View Code</summary>
                 <pre><code class="language-javascript">// All standard array methods work!
-$.scope.todos.push({ task: 'New task' });    // Add to end
-$.scope.todos.pop();                         // Remove from end
-$.scope.todos.shift();                       // Remove from start
-$.scope.todos.unshift({ task: 'Urgent!' }); // Add to start
-$.scope.todos.reverse();                     // Reverse order
-$.scope.todos.splice(1, 1);                  // Remove at index 1
+$.scope.todos4.push({ task: 'New task' });    // Add to end
+$.scope.todos4.pop();                         // Remove from end
+$.scope.todos4.shift();                       // Remove from start
+$.scope.todos4.unshift({ task: 'Urgent!' }); // Add to start
+$.scope.todos4.reverse();                     // Reverse order
+$.scope.todos4.splice(1, 1);                  // Remove at index 1
 
 // DOM updates automatically for all methods!</code></pre>
             </details>
@@ -302,39 +319,6 @@ $.get('https://www.reddit.com/.json', function (data) {
         <section id="full-docs" class="demo-section">
             <h2>📚 Full Documentation</h2>
             <p>Want to learn more? Check out the complete documentation on GitHub with detailed API references, advanced examples, and integration guides.</p>
-
-            <div class="docs-grid">
-                <div class="docs-card">
-                    <h3>🔧 API Reference</h3>
-                    <p>Complete list of all methods, properties, and options</p>
-                    <ul>
-                        <li>Array Methods (push, pop, splice, etc.)</li>
-                        <li>Helper Methods (update, remove, getByKey, etc.)</li>
-                        <li>jQuery Helpers (scopeGet, scopeItem, etc.)</li>
-                        <li>Customization Hooks (__put, __take, __putUpdate)</li>
-                    </ul>
-                </div>
-                <div class="docs-card">
-                    <h3>⚙️ Configuration</h3>
-                    <p>Learn about all configuration options</p>
-                    <ul>
-                        <li>Custom Index Keys (jq-index-key)</li>
-                        <li>Automatic Sorting (jr-order-by, jr-order-reverse)</li>
-                        <li>Nested Templates</li>
-                        <li>Template Variables (_parent, _index, _list)</li>
-                    </ul>
-                </div>
-                <div class="docs-card">
-                    <h3>💡 Examples</h3>
-                    <p>More real-world examples and use cases</p>
-                    <ul>
-                        <li>Todo List with localStorage</li>
-                        <li>Reddit Feed Browser</li>
-                        <li>Data Tables with Sorting</li>
-                        <li>Nested Data Structures</li>
-                    </ul>
-                </div>
-            </div>
 
             <div class="docs-cta">
                 <a href="https://github.com/wmantly/jq-repeat#readme" target="_blank" class="btn btn-primary btn-large">

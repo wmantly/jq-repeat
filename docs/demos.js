@@ -31,9 +31,9 @@ function initAllTodos() {
 
     // Demo 2: Sorted todo list
     $.scope.todos2.push(
-        { task: 'Zebra task' },
-        { task: 'Apple task' },
-        { task: 'Monkey task' }
+        { task: 'Low priority task', priority: 8 },
+        { task: 'High priority task', priority: 2 },
+        { task: 'Medium priority task', priority: 5 }
     );
 
     // Demo 3: Animated todo list
@@ -115,8 +115,9 @@ $(document).on('keypress', '#todo-input-1', function(e) {
 function addTodo2() {
     const input = $('#todo-input-2');
     const task = input.val().trim();
+    const priority = Number($('#priority-select-2').val());
     if (task) {
-        $.scope.todos2.push({ task: task });
+        $.scope.todos2.push({ task: task, priority: priority });
         input.val('');
     }
 }
