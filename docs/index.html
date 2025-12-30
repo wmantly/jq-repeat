@@ -54,18 +54,18 @@
         </section>
 
         <section id="demo-basic" class="demo-section">
-            <h2>Demo 1: Basic Todo List</h2>
+            <h2>Basic Todo List</h2>
             <p>Click "Add Task" to see items automatically rendered in the DOM. Use the buttons below to interact with the list.</p>
 
             <div class="demo-container">
                 <div class="demo-controls">
-                    <input type="text" id="todo-input" placeholder="Enter a task..." value="">
-                    <button onclick="addTodo()">Add Task</button>
-                    <button onclick="clearTodos()">Clear All</button>
+                    <input type="text" id="todo-input-1" placeholder="Enter a task..." value="">
+                    <button onclick="addTodo1()">Add Task</button>
+                    <button onclick="clearTodos1()">Clear All</button>
                 </div>
 
-                <ul id="todo-list" class="result-area">
-                    <li jq-repeat="todos">
+                <ul id="todo-list-1" class="result-area">
+                    <li jq-repeat="todos1">
                         <span class="todo-item">{{ task }}</span>
                         <button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button>
                     </li>
@@ -89,19 +89,22 @@ $.scope.todos.push({ task: 'Walk the dog' });
         </section>
 
         <section id="demo-sorting" class="demo-section">
-            <h2>Demo 2: Add Automatic Sorting</h2>
-            <p>Now let's add sorting to our todo list! Click "Enable Sorting" to add the <code>jr-order-by</code> attribute. New items will be inserted alphabetically.</p>
+            <h2>Automatic Sorting</h2>
+            <p>Items are automatically inserted in sorted order using <code>jr-order-by</code>. Try adding tasks - they'll appear alphabetically!</p>
 
             <div class="demo-container">
                 <div class="demo-controls">
-                    <button onclick="enableSorting()" id="sort-btn">Enable Sorting</button>
-                    <button onclick="disableSorting()" id="unsort-btn" style="display:none;">Disable Sorting</button>
-                    <span id="sort-status" class="status-text"></span>
+                    <input type="text" id="todo-input-2" placeholder="Enter a task..." value="">
+                    <button onclick="addTodo2()">Add Task</button>
+                    <button onclick="clearTodos2()">Clear All</button>
                 </div>
 
-                <p class="info">
-                    Try adding tasks after enabling sorting - they'll appear in alphabetical order!
-                </p>
+                <ul id="todo-list-2" class="result-area">
+                    <li jq-repeat="todos2" jr-order-by="task">
+                        <span class="todo-item">{{ task }}</span>
+                        <button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button>
+                    </li>
+                </ul>
             </div>
 
             <details class="code-example">
@@ -120,19 +123,22 @@ $.scope.todos.push({ task: 'Apple task' });
 
 
         <section id="demo-animations" class="demo-section">
-            <h2>Demo 3: Add Custom Animations</h2>
-            <p>Use hooks like <code>__put</code> and <code>__take</code> to add smooth animations when items are added or removed.</p>
+            <h2>Custom Animations</h2>
+            <p>Use hooks like <code>__put</code> and <code>__take</code> to add smooth fade in/out animations when items are added or removed.</p>
 
             <div class="demo-container">
                 <div class="demo-controls">
-                    <button onclick="enableAnimations()" id="anim-btn">Enable Animations</button>
-                    <button onclick="disableAnimations()" id="unanim-btn" style="display:none;">Disable Animations</button>
-                    <span id="anim-status" class="status-text"></span>
+                    <input type="text" id="todo-input-3" placeholder="Enter a task..." value="">
+                    <button onclick="addTodo3()">Add Task</button>
+                    <button onclick="clearTodos3()">Clear All</button>
                 </div>
 
-                <p class="info">
-                    Try adding and removing tasks after enabling animations - watch them fade in and out!
-                </p>
+                <ul id="todo-list-3" class="result-area">
+                    <li jq-repeat="todos3">
+                        <span class="todo-item">{{ task }}</span>
+                        <button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button>
+                    </li>
+                </ul>
             </div>
 
             <details class="code-example">
@@ -152,11 +158,24 @@ $.scope.todos.__take = function($el, item, list) {
         </section>
 
         <section id="demo-array-methods" class="demo-section">
-            <h2>Demo 4: Array Methods</h2>
-            <p>All standard array methods work with automatic DOM updates. Try them on your todo list!</p>
+            <h2>Array Methods</h2>
+            <p>All standard array methods work with automatic DOM updates. Try them on the todo list below!</p>
 
             <div class="demo-container">
                 <div class="demo-controls">
+                    <input type="text" id="todo-input-4" placeholder="Enter a task..." value="">
+                    <button onclick="addTodo4()">Add Task</button>
+                    <button onclick="clearTodos4()">Clear All</button>
+                </div>
+
+                <ul id="todo-list-4" class="result-area">
+                    <li jq-repeat="todos4">
+                        <span class="todo-item">{{ task }}</span>
+                        <button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button>
+                    </li>
+                </ul>
+
+                <div class="demo-controls" style="margin-top: 15px;">
                     <button onclick="todoPop()">Pop (Remove Last)</button>
                     <button onclick="todoShift()">Shift (Remove First)</button>
                     <button onclick="todoReverse()">Reverse Order</button>
@@ -183,14 +202,19 @@ $.scope.todos.splice(1, 1);                  // Remove at index 1
         </section>
 
         <section id="demo-reddit" class="demo-section">
-            <h2>Demo 5: Real-World Example - Reddit Feed</h2>
+            <h2>Real-World Example - Reddit Feed</h2>
             <p>Fetch data from Reddit's JSON API and automatically render it. This shows how jq-repeat works with real external data.</p>
+
+            <p class="info" style="background: #fff3cd; border-left-color: #ffc107;">
+                ⚠️ Note: This demo may not work due to CORS restrictions on GitHub Pages.
+                <a href="http://jsfiddle.net/wmantly/sge3zr28/" target="_blank" style="color: #667eea; font-weight: bold;">View working version on JSFiddle →</a>
+            </p>
 
             <div class="demo-container">
                 <div class="demo-controls">
-                    <button onclick="loadReddit()">Load Reddit Posts</button>
+                    <button onclick="loadReddit()">Try Loading Reddit Posts</button>
                     <button onclick="clearReddit()">Clear</button>
-                    <select id="subreddit-select" onchange="loadReddit()">
+                    <select id="subreddit-select">
                         <option value="">r/popular</option>
                         <option value="programming">r/programming</option>
                         <option value="javascript">r/javascript</option>

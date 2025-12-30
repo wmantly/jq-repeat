@@ -2,168 +2,142 @@
 $(document).ready(function() {
     console.log('jq-repeat demos loaded!');
 
-    // Pre-populate the todo list with some items
-    initTodos();
-
-    // Update the todo length display
-    updateTodoLength();
+    // Pre-populate each todo list with some items
+    initAllTodos();
 });
 
-function initTodos() {
-    // Add some initial tasks
-    $.scope.todos.push(
+function initAllTodos() {
+    // Demo 1: Basic todo list
+    $.scope.todos1.push(
         { task: 'Buy groceries' },
         { task: 'Walk the dog' },
-        { task: 'Finish project report' },
-        { task: 'Call mom' }
+        { task: 'Finish project report' }
     );
-}
 
-// ===== DEMO 1: BASIC TODO LIST =====
+    // Demo 2: Sorted todo list
+    $.scope.todos2.push(
+        { task: 'Zebra task' },
+        { task: 'Apple task' },
+        { task: 'Monkey task' }
+    );
 
-function addTodo() {
-    const input = $('#todo-input');
-    const task = input.val().trim();
-    if (task) {
-        $.scope.todos.push({ task: task });
-        input.val('');
-        updateTodoLength();
-    }
-}
+    // Demo 3: Animated todo list
+    $.scope.todos3.push(
+        { task: 'Task with fade in' },
+        { task: 'Another animated task' }
+    );
 
-function clearTodos() {
-    $.scope.todos.empty();
-    updateTodoLength();
-}
-
-// Add todo on Enter key
-$(document).on('keypress', '#todo-input', function(e) {
-    if (e.which === 13) {
-        addTodo();
-    }
-});
-
-function updateTodoLength() {
-    $('#todo-length').text($.scope.todos.length);
-}
-
-// ===== DEMO 2: AUTOMATIC SORTING =====
-
-let sortingEnabled = false;
-
-function enableSorting() {
-    if (sortingEnabled) return;
-
-    // Store current items
-    const currentItems = $.scope.todos.slice();
-
-    // Clear the list
-    $.scope.todos.empty();
-
-    // Find the template element and add sorting attribute
-    const $template = $('li[jq-repeat="todos"]').first();
-    if ($template.length === 0) {
-        // Need to recreate it from the script tag
-        const $holder = $('#jq-repeat-holder-todos');
-        $holder.after('<li jq-repeat="todos" jr-order-by="task"><span class="todo-item">{{ task }}</span><button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button></li>');
-    } else {
-        $template.attr('jr-order-by', 'task');
-    }
-
-    // Re-add all items (they'll be sorted)
-    setTimeout(() => {
-        currentItems.forEach(item => {
-            $.scope.todos.push(item);
-        });
-        updateTodoLength();
-    }, 100);
-
-    sortingEnabled = true;
-    $('#sort-btn').hide();
-    $('#unsort-btn').show();
-    $('#sort-status').text('Sorting Enabled ✓').show();
-}
-
-function disableSorting() {
-    if (!sortingEnabled) return;
-
-    // Store current items
-    const currentItems = $.scope.todos.slice();
-
-    // Clear the list
-    $.scope.todos.empty();
-
-    // Remove sorting attribute
-    const $template = $('li[jq-repeat="todos"]').first();
-    if ($template.length === 0) {
-        const $holder = $('#jq-repeat-holder-todos');
-        $holder.after('<li jq-repeat="todos"><span class="todo-item">{{ task }}</span><button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button></li>');
-    } else {
-        $template.removeAttr('jr-order-by');
-    }
-
-    // Re-add all items
-    setTimeout(() => {
-        currentItems.forEach(item => {
-            $.scope.todos.push(item);
-        });
-        updateTodoLength();
-    }, 100);
-
-    sortingEnabled = false;
-    $('#sort-btn').show();
-    $('#unsort-btn').hide();
-    $('#sort-status').hide();
-}
-
-// ===== DEMO 3: CUSTOM ANIMATIONS =====
-
-let animationsEnabled = false;
-let originalPut = null;
-let originalTake = null;
-
-function enableAnimations() {
-    if (animationsEnabled) return;
-
-    // Store original hooks
-    originalPut = $.scope.todos.__put;
-    originalTake = $.scope.todos.__take;
-
-    // Set animation hooks
-    $.scope.todos.__put = function($el, item, list) {
+    // Setup animation hooks for todos3
+    $.scope.todos3.__put = function($el, item, list) {
         $el.hide().fadeIn(300);
     };
 
-    $.scope.todos.__take = function($el, item, list) {
+    $.scope.todos3.__take = function($el, item, list) {
         $el.fadeOut(300, function() {
             $(this).remove();
         });
     };
 
-    animationsEnabled = true;
-    $('#anim-btn').hide();
-    $('#unanim-btn').show();
-    $('#anim-status').text('Animations Enabled ✓').show();
+    // Demo 4: Array methods
+    $.scope.todos4.push(
+        { task: 'Item A' },
+        { task: 'Item B' },
+        { task: 'Item C' },
+        { task: 'Item D' }
+    );
+
+    updateTodoLength();
 }
 
-function disableAnimations() {
-    if (!animationsEnabled) return;
+// ===== DEMO 1: BASIC TODO LIST =====
 
-    // Restore original hooks
-    $.scope.todos.__put = originalPut;
-    $.scope.todos.__take = originalTake;
-
-    animationsEnabled = false;
-    $('#anim-btn').show();
-    $('#unanim-btn').hide();
-    $('#anim-status').hide();
+function addTodo1() {
+    const input = $('#todo-input-1');
+    const task = input.val().trim();
+    if (task) {
+        $.scope.todos1.push({ task: task });
+        input.val('');
+    }
 }
+
+function clearTodos1() {
+    $.scope.todos1.empty();
+}
+
+$(document).on('keypress', '#todo-input-1', function(e) {
+    if (e.which === 13) {
+        addTodo1();
+    }
+});
+
+// ===== DEMO 2: AUTOMATIC SORTING =====
+
+function addTodo2() {
+    const input = $('#todo-input-2');
+    const task = input.val().trim();
+    if (task) {
+        $.scope.todos2.push({ task: task });
+        input.val('');
+    }
+}
+
+function clearTodos2() {
+    $.scope.todos2.empty();
+}
+
+$(document).on('keypress', '#todo-input-2', function(e) {
+    if (e.which === 13) {
+        addTodo2();
+    }
+});
+
+// ===== DEMO 3: CUSTOM ANIMATIONS =====
+
+function addTodo3() {
+    const input = $('#todo-input-3');
+    const task = input.val().trim();
+    if (task) {
+        $.scope.todos3.push({ task: task });
+        input.val('');
+    }
+}
+
+function clearTodos3() {
+    $.scope.todos3.empty();
+}
+
+$(document).on('keypress', '#todo-input-3', function(e) {
+    if (e.which === 13) {
+        addTodo3();
+    }
+});
 
 // ===== DEMO 4: ARRAY METHODS =====
 
+function addTodo4() {
+    const input = $('#todo-input-4');
+    const task = input.val().trim();
+    if (task) {
+        $.scope.todos4.push({ task: task });
+        input.val('');
+        updateTodoLength();
+    }
+}
+
+function clearTodos4() {
+    $.scope.todos4.empty();
+    updateTodoLength();
+}
+
+$(document).on('keypress', '#todo-input-4', function(e) {
+    if (e.which === 13) {
+        addTodo4();
+    }
+});
+
 function todoPop() {
-    if ($.scope.todos.length > 0) {
-        const item = $.scope.todos.pop();
+    if ($.scope.todos4.length > 0) {
+        const item = $.scope.todos4.pop();
         updateTodoLength();
         console.log('Popped:', item);
     } else {
@@ -172,8 +146,8 @@ function todoPop() {
 }
 
 function todoShift() {
-    if ($.scope.todos.length > 0) {
-        const item = $.scope.todos.shift();
+    if ($.scope.todos4.length > 0) {
+        const item = $.scope.todos4.shift();
         updateTodoLength();
         console.log('Shifted:', item);
     } else {
@@ -182,12 +156,12 @@ function todoShift() {
 }
 
 function todoReverse() {
-    $.scope.todos.reverse();
+    $.scope.todos4.reverse();
 }
 
 function todoSplice() {
-    if ($.scope.todos.length >= 2) {
-        const removed = $.scope.todos.splice(1, 1);
+    if ($.scope.todos4.length >= 2) {
+        const removed = $.scope.todos4.splice(1, 1);
         updateTodoLength();
         console.log('Removed:', removed);
     } else {
@@ -195,10 +169,9 @@ function todoSplice() {
     }
 }
 
-// Update todo length whenever items change
-$(document).on('DOMSubtreeModified', '#todo-list', function() {
-    updateTodoLength();
-});
+function updateTodoLength() {
+    $('#todo-length').text($.scope.todos4.length);
+}
 
 // ===== DEMO 5: REDDIT API =====
 
@@ -214,17 +187,23 @@ function loadReddit() {
     // Show loading state
     $('#reddit-area').addClass('loading');
 
-    $.get(url, function (data) {
-        $('#reddit-area').removeClass('loading');
+    $.ajax({
+        url: url,
+        dataType: 'json',
+        success: function(data) {
+            $('#reddit-area').removeClass('loading');
 
-        if (data && data.data && data.data.children) {
-            data.data.children.forEach(function (post) {
-                $.scope.reddit.push(post.data);
-            });
+            if (data && data.data && data.data.children) {
+                data.data.children.forEach(function (post) {
+                    $.scope.reddit.push(post.data);
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#reddit-area').removeClass('loading');
+            console.error('Reddit API error:', error);
+            alert('Failed to load Reddit posts. This might be due to CORS restrictions. Try a CORS proxy or view in JSFiddle.');
         }
-    }).fail(function() {
-        $('#reddit-area').removeClass('loading');
-        alert('Failed to load Reddit posts. Please try again.');
     });
 }
 
