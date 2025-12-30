@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jq-repeat - Simple, Powerful jQuery Templating</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>jq-repeat</h1>
+            <p class="tagline">Simple, yet highly customizable jQuery plugin for dynamic DOM templating</p>
+            <div class="header-links">
+                <a href="https://github.com/wmantly/jq-repeat" class="btn btn-primary">View on GitHub</a>
+                <a href="https://www.npmjs.com/package/jq-repeat" class="btn btn-secondary">NPM Package</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="intro">
+            <h2>What is jq-repeat?</h2>
+            <p>A simple, yet highly customizable jQuery plugin to handle all of your client-side repetitive DOM needs. Simple, quick and powerful templating using Mustache syntax. Modeled after ng-repeat with automatic DOM synchronization.</p>
+
+            <div class="features-grid">
+                <div class="feature">
+                    <h3>🚀 Easy to Use</h3>
+                    <p>Just add a <code>jq-repeat</code> attribute and push data to the scope</p>
+                </div>
+                <div class="feature">
+                    <h3>⚡ Automatic DOM Sync</h3>
+                    <p>DOM updates automatically when you modify the data</p>
+                </div>
+                <div class="feature">
+                    <h3>🎨 Mustache Templates</h3>
+                    <p>Familiar templating syntax with full Mustache support</p>
+                </div>
+                <div class="feature">
+                    <h3>📦 Array Methods</h3>
+                    <p>Use standard array methods: push, pop, splice, and more</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="installation">
+            <h2>Installation</h2>
+            <pre><code>npm install jq-repeat</code></pre>
+            <p>Or include via CDN:</p>
+            <pre><code>&lt;script src="https://code.jquery.com/jquery-3.7.1.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/4.2.0/mustache.min.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/jq-repeat.min.js"&gt;&lt;/script&gt;</code></pre>
+        </section>
+
+        <section id="demo-basic" class="demo-section">
+            <h2>Demo: Basic Todo List</h2>
+            <p>Click "Add Task" to see items automatically rendered in the DOM.</p>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <input type="text" id="todo-input" placeholder="Enter a task..." value="Buy groceries">
+                    <button onclick="addTodo()">Add Task</button>
+                    <button onclick="clearTodos()">Clear All</button>
+                </div>
+
+                <ul id="todo-list" class="result-area">
+                    <li jq-repeat="todos">
+                        <span class="todo-item">{{ task }}</span>
+                        <button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button>
+                    </li>
+                </ul>
+            </div>
+
+            <details class="code-example">
+                <summary>View Code</summary>
+                <pre><code>&lt;ul&gt;
+    &lt;li jq-repeat="todos"&gt;
+        &lt;span&gt;{{ task }}&lt;/span&gt;
+        &lt;button onclick="$(this).scopeItemRemove()"&gt;Remove&lt;/button&gt;
+    &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;script&gt;
+    $.scope.todos.push({ task: 'Buy groceries' });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section id="demo-sorting" class="demo-section">
+            <h2>Demo: Automatic Sorting</h2>
+            <p>Items are automatically inserted in sorted order using <code>jr-order-by</code>.</p>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <input type="text" id="user-name" placeholder="Name" value="Alice">
+                    <input type="number" id="user-score" placeholder="Score" value="85">
+                    <button onclick="addUser()">Add User</button>
+                    <button onclick="clearUsers()">Clear All</button>
+                </div>
+
+                <div class="result-area">
+                    <h4>Sorted by Score (Descending):</h4>
+                    <ul id="user-list">
+                        <li jq-repeat="users" jr-order-by="score" jr-order-reverse="true">
+                            {{ name }}: <strong>{{ score }}</strong> points
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <details class="code-example">
+                <summary>View Code</summary>
+                <pre><code>&lt;li jq-repeat="users" jr-order-by="score" jr-order-reverse="true"&gt;
+    {{ name }}: {{ score }} points
+&lt;/li&gt;
+
+&lt;script&gt;
+    $.scope.users.push({ name: 'Alice', score: 85 });
+    // Automatically inserted in sorted position!
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section id="demo-custom-index" class="demo-section">
+            <h2>Demo: Custom Index Keys</h2>
+            <p>Use <code>jq-index-key</code> to identify items by a custom property instead of array index.</p>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <input type="text" id="product-id" placeholder="Product ID" value="prod-001">
+                    <input type="text" id="product-name" placeholder="Product Name" value="Laptop">
+                    <input type="number" id="product-price" placeholder="Price" value="999">
+                    <button onclick="addProduct()">Add Product</button>
+                    <button onclick="updateProduct()">Update First Product</button>
+                </div>
+
+                <div class="result-area">
+                    <div id="product-list">
+                        <div jq-repeat="products" jq-index-key="id" class="product-card">
+                            <strong>{{ name }}</strong> (ID: {{ id }})<br>
+                            Price: ${{ price }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <details class="code-example">
+                <summary>View Code</summary>
+                <pre><code>&lt;div jq-repeat="products" jq-index-key="id"&gt;
+    {{ name }} (ID: {{ id }}) - ${{ price }}
+&lt;/div&gt;
+
+&lt;script&gt;
+    $.scope.products.push({ id: 'prod-001', name: 'Laptop', price: 999 });
+
+    // Update by ID instead of index
+    $.scope.products.update('prod-001', { price: 899 });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section id="demo-animations" class="demo-section">
+            <h2>Demo: Custom Animations</h2>
+            <p>Use hooks like <code>__put</code> and <code>__take</code> to add custom animations.</p>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <input type="text" id="message-input" placeholder="Enter message..." value="Hello World!">
+                    <button onclick="addMessage()">Add Message</button>
+                </div>
+
+                <div class="result-area">
+                    <div id="message-list">
+                        <div jq-repeat="messages" class="message-card">
+                            {{ text }}
+                            <button class="btn-sm" onclick="$(this).scopeItemRemove()">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <details class="code-example">
+                <summary>View Code</summary>
+                <pre><code>&lt;div jq-repeat="messages"&gt;
+    {{ text }}
+&lt;/div&gt;
+
+&lt;script&gt;
+    // Fade in when added
+    $.scope.messages.__put = function($el, item, list) {
+        $el.hide().fadeIn(300);
+    };
+
+    // Fade out when removed
+    $.scope.messages.__take = function($el, item, list) {
+        $el.fadeOut(300, function() {
+            $(this).remove();
+        });
+    };
+
+    $.scope.messages.push({ text: 'Hello World!' });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section id="demo-array-methods" class="demo-section">
+            <h2>Demo: Array Methods</h2>
+            <p>All standard array methods work with automatic DOM updates.</p>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <button onclick="arrayPush()">Push (Add End)</button>
+                    <button onclick="arrayPop()">Pop (Remove End)</button>
+                    <button onclick="arrayUnshift()">Unshift (Add Start)</button>
+                    <button onclick="arrayShift()">Shift (Remove Start)</button>
+                    <button onclick="arrayReverse()">Reverse</button>
+                    <button onclick="arraySplice()">Splice (Remove 2nd)</button>
+                </div>
+
+                <div class="result-area">
+                    <ul id="array-list">
+                        <li jq-repeat="arrayDemo">
+                            Item {{ value }} (Index: {{ _index }})
+                        </li>
+                    </ul>
+                    <p class="info">Length: <span id="array-length">0</span></p>
+                </div>
+            </div>
+
+            <details class="code-example">
+                <summary>View Code</summary>
+                <pre><code>$.scope.arrayDemo.push({ value: 'A' });     // Add to end
+$.scope.arrayDemo.pop();                    // Remove from end
+$.scope.arrayDemo.unshift({ value: 'Z' }); // Add to start
+$.scope.arrayDemo.shift();                  // Remove from start
+$.scope.arrayDemo.reverse();                // Reverse order
+$.scope.arrayDemo.splice(1, 1);             // Remove at index 1</code></pre>
+            </details>
+        </section>
+
+        <section id="demo-nested" class="demo-section">
+            <h2>Demo: Nested Templates</h2>
+            <p>Create nested repeating structures and access parent data with <code>_parent</code>.</p>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <button onclick="addDepartment()">Add Department</button>
+                    <button onclick="addEmployee()">Add Employee to First Dept</button>
+                </div>
+
+                <div class="result-area">
+                    <div id="department-list">
+                        <div jq-repeat="departments" class="department-card">
+                            <h4>{{ name }} Department</h4>
+                            <ul>
+                                <li jq-repeat="employees">
+                                    {{ firstName }} {{ lastName }} - works in {{ _parent.name }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <details class="code-example">
+                <summary>View Code</summary>
+                <pre><code>&lt;div jq-repeat="departments"&gt;
+    &lt;h4&gt;{{ name }} Department&lt;/h4&gt;
+    &lt;ul&gt;
+        &lt;li jq-repeat="employees"&gt;
+            {{ firstName }} {{ lastName }} - works in {{ _parent.name }}
+        &lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+            </details>
+        </section>
+
+        <section id="demo-jquery-helpers" class="demo-section">
+            <h2>Demo: jQuery Helpers</h2>
+            <p>Use jQuery helper methods to interact with items directly from the DOM.</p>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <button onclick="addItem()">Add Item</button>
+                </div>
+
+                <div class="result-area">
+                    <ul id="helper-list">
+                        <li jq-repeat="helperItems" class="helper-item">
+                            <span class="item-text">{{ text }}</span>
+                            <button class="btn-sm" onclick="updateItem(this)">Update</button>
+                            <button class="btn-sm" onclick="removeItem(this)">Remove</button>
+                            <button class="btn-sm" onclick="getItemData(this)">Show Data</button>
+                        </li>
+                    </ul>
+                    <pre id="helper-output" class="output"></pre>
+                </div>
+            </div>
+
+            <details class="code-example">
+                <summary>View Code</summary>
+                <pre><code>// Get the RepeatList scope
+$(element).scopeGet();
+
+// Get the data for this specific item
+$(element).scopeItem();
+
+// Update this item
+$(element).scopeItemUpdate({ text: 'Updated!' });
+
+// Remove this item
+$(element).scopeItemRemove();</code></pre>
+            </details>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Made with ❤️ by <a href="https://github.com/wmantly">William Mantly</a></p>
+            <p>
+                <a href="https://github.com/wmantly/jq-repeat">GitHub</a> •
+                <a href="https://www.npmjs.com/package/jq-repeat">NPM</a> •
+                <a href="https://github.com/wmantly/jq-repeat/blob/master/LICENSE">MIT License</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/4.2.0/mustache.min.js"></script>
+    <script src="../dist/js/jq-repeat.min.js"></script>
+    <script src="demos.js"></script>
+</body>
+</html>
