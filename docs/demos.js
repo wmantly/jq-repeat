@@ -2,43 +2,38 @@
 $(document).ready(function() {
     console.log('jq-repeat demos loaded!');
 
-    // Initialize demos with some data
-    initDemos();
+    // Pre-populate the todo list with some items
+    initTodos();
+
+    // Update the todo length display
+    updateTodoLength();
 });
 
-function initDemos() {
-    // Initialize array demo with some items
-    $.scope.arrayDemo.push(
-        { value: 'A' },
-        { value: 'B' },
-        { value: 'C' }
+function initTodos() {
+    // Add some initial tasks
+    $.scope.todos.push(
+        { task: 'Buy groceries' },
+        { task: 'Walk the dog' },
+        { task: 'Finish project report' },
+        { task: 'Call mom' }
     );
-    updateArrayLength();
-
-    // Setup animation hooks for messages
-    $.scope.messages.__put = function($el, item, list) {
-        $el.hide().fadeIn(300);
-    };
-
-    $.scope.messages.__take = function($el, item, list) {
-        $el.fadeOut(300, function() {
-            $(this).remove();
-        });
-    };
 }
 
-// ===== BASIC TODO DEMO =====
+// ===== DEMO 1: BASIC TODO LIST =====
+
 function addTodo() {
     const input = $('#todo-input');
     const task = input.val().trim();
     if (task) {
         $.scope.todos.push({ task: task });
         input.val('');
+        updateTodoLength();
     }
 }
 
 function clearTodos() {
     $.scope.todos.empty();
+    updateTodoLength();
 }
 
 // Add todo on Enter key
@@ -48,182 +43,159 @@ $(document).on('keypress', '#todo-input', function(e) {
     }
 });
 
-// ===== SORTING DEMO =====
-function addUser() {
-    const name = $('#user-name').val().trim();
-    const score = parseInt($('#user-score').val());
-
-    if (name && !isNaN(score)) {
-        $.scope.users.push({ name: name, score: score });
-        $('#user-name').val('');
-        $('#user-score').val('');
-    }
+function updateTodoLength() {
+    $('#todo-length').text($.scope.todos.length);
 }
 
-function clearUsers() {
-    $.scope.users.empty();
-}
+// ===== DEMO 2: AUTOMATIC SORTING =====
 
-// ===== CUSTOM INDEX KEY DEMO =====
-let productCounter = 1;
+let sortingEnabled = false;
 
-function addProduct() {
-    const id = $('#product-id').val().trim() || 'prod-' + String(productCounter++).padStart(3, '0');
-    const name = $('#product-name').val().trim();
-    const price = parseInt($('#product-price').val());
+function enableSorting() {
+    if (sortingEnabled) return;
 
-    if (name && !isNaN(price)) {
-        $.scope.products.push({
-            id: id,
-            name: name,
-            price: price
-        });
+    // Store current items
+    const currentItems = $.scope.todos.slice();
 
-        $('#product-id').val('');
-        $('#product-name').val('');
-        $('#product-price').val('');
-    }
-}
+    // Clear the list
+    $.scope.todos.empty();
 
-function updateProduct() {
-    if ($.scope.products.length > 0) {
-        const firstProduct = $.scope.products[0];
-        const newPrice = Math.floor(Math.random() * 500) + 500;
-
-        $.scope.products.update(firstProduct.id, {
-            price: newPrice
-        });
-
-        alert('Updated ' + firstProduct.name + ' to $' + newPrice);
+    // Find the template element and add sorting attribute
+    const $template = $('li[jq-repeat="todos"]').first();
+    if ($template.length === 0) {
+        // Need to recreate it from the script tag
+        const $holder = $('#jq-repeat-holder-todos');
+        $holder.after('<li jq-repeat="todos" jr-order-by="task"><span class="todo-item">{{ task }}</span><button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button></li>');
     } else {
-        alert('No products to update! Add a product first.');
+        $template.attr('jr-order-by', 'task');
     }
+
+    // Re-add all items (they'll be sorted)
+    setTimeout(() => {
+        currentItems.forEach(item => {
+            $.scope.todos.push(item);
+        });
+        updateTodoLength();
+    }, 100);
+
+    sortingEnabled = true;
+    $('#sort-btn').hide();
+    $('#unsort-btn').show();
+    $('#sort-status').text('Sorting Enabled ✓').show();
 }
 
-// ===== ANIMATIONS DEMO =====
-let messageCounter = 1;
+function disableSorting() {
+    if (!sortingEnabled) return;
 
-function addMessage() {
-    const input = $('#message-input');
-    const text = input.val().trim() || 'Message #' + messageCounter++;
+    // Store current items
+    const currentItems = $.scope.todos.slice();
 
-    $.scope.messages.push({ text: text });
-    input.val('');
+    // Clear the list
+    $.scope.todos.empty();
+
+    // Remove sorting attribute
+    const $template = $('li[jq-repeat="todos"]').first();
+    if ($template.length === 0) {
+        const $holder = $('#jq-repeat-holder-todos');
+        $holder.after('<li jq-repeat="todos"><span class="todo-item">{{ task }}</span><button class="btn-sm" onclick="$(this).scopeItemRemove()">Remove</button></li>');
+    } else {
+        $template.removeAttr('jr-order-by');
+    }
+
+    // Re-add all items
+    setTimeout(() => {
+        currentItems.forEach(item => {
+            $.scope.todos.push(item);
+        });
+        updateTodoLength();
+    }, 100);
+
+    sortingEnabled = false;
+    $('#sort-btn').show();
+    $('#unsort-btn').hide();
+    $('#sort-status').hide();
 }
 
-// ===== ARRAY METHODS DEMO =====
-let arrayCounter = 0;
+// ===== DEMO 3: CUSTOM ANIMATIONS =====
 
-function arrayPush() {
-    arrayCounter++;
-    $.scope.arrayDemo.push({ value: String.fromCharCode(65 + (arrayCounter % 26)) });
-    updateArrayLength();
+let animationsEnabled = false;
+let originalPut = null;
+let originalTake = null;
+
+function enableAnimations() {
+    if (animationsEnabled) return;
+
+    // Store original hooks
+    originalPut = $.scope.todos.__put;
+    originalTake = $.scope.todos.__take;
+
+    // Set animation hooks
+    $.scope.todos.__put = function($el, item, list) {
+        $el.hide().fadeIn(300);
+    };
+
+    $.scope.todos.__take = function($el, item, list) {
+        $el.fadeOut(300, function() {
+            $(this).remove();
+        });
+    };
+
+    animationsEnabled = true;
+    $('#anim-btn').hide();
+    $('#unanim-btn').show();
+    $('#anim-status').text('Animations Enabled ✓').show();
 }
 
-function arrayPop() {
-    if ($.scope.arrayDemo.length > 0) {
-        const item = $.scope.arrayDemo.pop();
-        updateArrayLength();
+function disableAnimations() {
+    if (!animationsEnabled) return;
+
+    // Restore original hooks
+    $.scope.todos.__put = originalPut;
+    $.scope.todos.__take = originalTake;
+
+    animationsEnabled = false;
+    $('#anim-btn').show();
+    $('#unanim-btn').hide();
+    $('#anim-status').hide();
+}
+
+// ===== DEMO 4: ARRAY METHODS =====
+
+function todoPop() {
+    if ($.scope.todos.length > 0) {
+        const item = $.scope.todos.pop();
+        updateTodoLength();
         console.log('Popped:', item);
+    } else {
+        alert('No items to pop!');
     }
 }
 
-function arrayUnshift() {
-    arrayCounter++;
-    $.scope.arrayDemo.unshift({ value: String.fromCharCode(90 - (arrayCounter % 26)) });
-    updateArrayLength();
-}
-
-function arrayShift() {
-    if ($.scope.arrayDemo.length > 0) {
-        const item = $.scope.arrayDemo.shift();
-        updateArrayLength();
+function todoShift() {
+    if ($.scope.todos.length > 0) {
+        const item = $.scope.todos.shift();
+        updateTodoLength();
         console.log('Shifted:', item);
+    } else {
+        alert('No items to shift!');
     }
 }
 
-function arrayReverse() {
-    $.scope.arrayDemo.reverse();
+function todoReverse() {
+    $.scope.todos.reverse();
 }
 
-function arraySplice() {
-    if ($.scope.arrayDemo.length >= 2) {
-        const removed = $.scope.arrayDemo.splice(1, 1);
-        updateArrayLength();
+function todoSplice() {
+    if ($.scope.todos.length >= 2) {
+        const removed = $.scope.todos.splice(1, 1);
+        updateTodoLength();
         console.log('Removed:', removed);
     } else {
-        alert('Need at least 2 items to splice!');
+        alert('Need at least 2 items to splice the 2nd one!');
     }
 }
 
-function updateArrayLength() {
-    $('#array-length').text($.scope.arrayDemo.length);
-}
-
-// ===== NESTED TEMPLATES DEMO =====
-let deptCounter = 1;
-let empCounter = 1;
-
-function addDepartment() {
-    const deptNames = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
-    const deptName = deptNames[(deptCounter - 1) % deptNames.length];
-
-    $.scope.departments.push({
-        name: deptName + ' ' + deptCounter,
-        employees: []
-    });
-
-    deptCounter++;
-}
-
-function addEmployee() {
-    if ($.scope.departments.length === 0) {
-        alert('Add a department first!');
-        return;
-    }
-
-    const firstNames = ['John', 'Jane', 'Mike', 'Sarah', 'Tom', 'Emily'];
-    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Davis'];
-
-    const firstName = firstNames[empCounter % firstNames.length];
-    const lastName = lastNames[empCounter % lastNames.length];
-
-    $.scope.departments[0].employees.push({
-        firstName: firstName,
-        lastName: lastName
-    });
-
-    empCounter++;
-}
-
-// ===== JQUERY HELPERS DEMO =====
-let helperCounter = 1;
-
-function addItem() {
-    $.scope.helperItems.push({
-        text: 'Item #' + helperCounter++,
-        timestamp: new Date().toLocaleTimeString()
-    });
-}
-
-function updateItem(button) {
-    const newText = prompt('Enter new text:');
-    if (newText) {
-        $(button).scopeItemUpdate({ text: newText });
-    }
-}
-
-function removeItem(button) {
-    $(button).scopeItemRemove();
-}
-
-function getItemData(button) {
-    const itemData = $(button).scopeItem();
-    const scope = $(button).scopeGet();
-
-    $('#helper-output').text(
-        'Item Data:\n' + JSON.stringify(itemData, null, 2) +
-        '\n\nScope Length: ' + scope.length +
-        '\nScope ID: ' + scope.__jqRepeatId
-    );
-}
+// Update todo length whenever items change
+$(document).on('DOMSubtreeModified', '#todo-list', function() {
+    updateTodoLength();
+});

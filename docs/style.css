@@ -375,6 +375,16 @@ details[open] summary {
     font-weight: 600;
 }
 
+.status-text {
+    margin-left: 15px;
+    padding: 8px 15px;
+    background: #4caf50;
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
 /* Footer */
 footer {
     background: #2d2d2d;
