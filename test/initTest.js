@@ -1,11 +1,13 @@
 import './setup.js';
 import { expect } from 'chai';
+import { cleanupScopes } from './setup.js';
 import '../src/jq-repeat.js';
 
 describe('jq-repeat Initialization', function () {
   beforeEach(function() {
     // Clear the body before each test
     document.body.innerHTML = '';
+    cleanupScopes();
   });
 
   it('should create a RepeatList in $.scope when jq-repeat element is added to DOM', function (done) {
