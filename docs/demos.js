@@ -199,3 +199,35 @@ function todoSplice() {
 $(document).on('DOMSubtreeModified', '#todo-list', function() {
     updateTodoLength();
 });
+
+// ===== DEMO 5: REDDIT API =====
+
+function loadReddit() {
+    const subreddit = $('#subreddit-select').val();
+    const url = subreddit
+        ? `https://www.reddit.com/r/${subreddit}/.json`
+        : 'https://www.reddit.com/.json';
+
+    // Clear existing posts
+    $.scope.reddit.empty();
+
+    // Show loading state
+    $('#reddit-area').addClass('loading');
+
+    $.get(url, function (data) {
+        $('#reddit-area').removeClass('loading');
+
+        if (data && data.data && data.data.children) {
+            data.data.children.forEach(function (post) {
+                $.scope.reddit.push(post.data);
+            });
+        }
+    }).fail(function() {
+        $('#reddit-area').removeClass('loading');
+        alert('Failed to load Reddit posts. Please try again.');
+    });
+}
+
+function clearReddit() {
+    $.scope.reddit.empty();
+}

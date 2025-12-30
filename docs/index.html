@@ -182,6 +182,76 @@ $.scope.todos.splice(1, 1);                  // Remove at index 1
             </details>
         </section>
 
+        <section id="demo-reddit" class="demo-section">
+            <h2>Demo 5: Real-World Example - Reddit Feed</h2>
+            <p>Fetch data from Reddit's JSON API and automatically render it. This shows how jq-repeat works with real external data.</p>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <button onclick="loadReddit()">Load Reddit Posts</button>
+                    <button onclick="clearReddit()">Clear</button>
+                    <select id="subreddit-select" onchange="loadReddit()">
+                        <option value="">r/popular</option>
+                        <option value="programming">r/programming</option>
+                        <option value="javascript">r/javascript</option>
+                        <option value="webdev">r/webdev</option>
+                        <option value="technology">r/technology</option>
+                    </select>
+                </div>
+
+                <div class="result-area" id="reddit-area">
+                    <ul class="reddit-list">
+                        <li class="reddit-card" jq-repeat="reddit">
+                            <div class="reddit-score">{{ score }}</div>
+                            <div class="reddit-thumbnail">
+                                <a href="{{ url }}" target="_blank">
+                                    <img src="{{ thumbnail }}" alt="thumbnail" onerror="this.src='https://via.placeholder.com/70x70?text=No+Image'"/>
+                                </a>
+                            </div>
+                            <div class="reddit-content">
+                                <h4 class="reddit-title">{{ title }}</h4>
+                                <div class="reddit-meta">
+                                    <span class="reddit-author">by {{ author }}</span>
+                                    <a href="https://reddit.com{{ permalink }}" target="_blank" class="reddit-comments">
+                                        {{ num_comments }} comments
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <details class="code-example">
+                <summary>View Code</summary>
+                <pre><code class="language-html">&lt;ul&gt;
+    &lt;li jq-repeat="reddit"&gt;
+        &lt;div&gt;{{ score }}&lt;/div&gt;
+        &lt;div&gt;
+            &lt;a href="{{ url }}" target="_blank"&gt;
+                &lt;img src="{{ thumbnail }}" alt="thumbnail"/&gt;
+            &lt;/a&gt;
+        &lt;/div&gt;
+        &lt;div&gt;
+            &lt;h4&gt;{{ title }}&lt;/h4&gt;
+            &lt;span&gt;by {{ author }}&lt;/span&gt;
+            &lt;a href="https://reddit.com{{ permalink }}" target="_blank"&gt;
+                {{ num_comments }} comments
+            &lt;/a&gt;
+        &lt;/div&gt;
+    &lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+                <pre><code class="language-javascript">// Fetch from Reddit's JSON API
+$.get('https://www.reddit.com/.json', function (data) {
+    data.data.children.forEach(function (post) {
+        $.scope.reddit.push(post.data);
+    });
+});
+
+// That's it! Items automatically render as they're added.</code></pre>
+            </details>
+        </section>
+
     </main>
 
     <footer>
