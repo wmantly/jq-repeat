@@ -9,8 +9,7 @@ describe('Nested Templates', function () {
     cleanupScopes();
   });
 
-  it.skip('should support nested jq-repeat templates (auto-populate not implemented)', function (done) {
-    // Create a nested template structure
+  it('should auto-populate nested jq-repeat scopes from parent data', function (done) {
     const template = `
       <div jq-repeat="departments">
         <h2>{{ name }}</h2>
@@ -23,7 +22,6 @@ describe('Nested Templates', function () {
     $(template).appendTo('body');
 
     setTimeout(() => {
-      // Add department with employees
       $.scope.departments.push({
         name: 'Engineering',
         employees: [
@@ -34,37 +32,27 @@ describe('Nested Templates', function () {
 
       setTimeout(() => {
         try {
-          // Check department was created
           expect($.scope.departments.length).to.equal(1);
           expect($('.jq-repeat-departments').length).to.equal(1);
           expect($('.jq-repeat-departments h2').text()).to.equal('Engineering');
 
-          // Wait for nested template to initialize
-          setTimeout(() => {
-            console.log('All scopes:', Object.keys($.scope));
-            console.log('Employees scope exists:', !!$.scope.employees);
-            if ($.scope.employees) {
-              console.log('Employees length:', $.scope.employees.length);
-              console.log('Employees:', $.scope.employees);
-            }
-            console.log('DOM employees elements:', $('.jq-repeat-employees').length);
-            console.log('Body HTML:', document.body.innerHTML);
+          // Nested scope auto-populated and rendered.
+          expect($('.jq-repeat-employees').length).to.equal(2);
+          const nested = $('.jq-repeat-employees').first().scopeGet();
+          expect(nested).to.exist;
+          expect(nested.length).to.equal(2);
+          // Also reachable from the parent item.
+          expect($.scope.departments[0].__jqNested.employees.length).to.equal(2);
 
-            // Check that employees scope was created and populated
-            expect($.scope.employees).to.exist;
-            expect($.scope.employees.length).to.equal(2);
-            expect($('.jq-repeat-employees').length).to.equal(2);
-
-            done();
-          }, 200);
+          done();
         } catch (error) {
           done(error);
         }
-      }, 150);
+      }, 200);
     }, 100);
   });
 
-  it.skip('should access parent data using _parent in nested templates (auto-populate not implemented)', function (done) {
+  it('should access parent data using _parent in nested templates', function (done) {
     const template = `
       <div jq-repeat="companies">
         <h2>{{ companyName }}</h2>
@@ -84,29 +72,24 @@ describe('Nested Templates', function () {
       });
 
       setTimeout(() => {
-        setTimeout(() => {
-          try {
-            console.log('Workers elements:', $('.jq-repeat-workers').length);
-            console.log('Workers text:', $('.jq-repeat-workers').map((i, el) => $(el).text()).get());
+        try {
+          expect($('.jq-repeat-workers').length).to.equal(2);
 
-            expect($('.jq-repeat-workers').length).to.equal(2);
+          const texts = $('.jq-repeat-workers').map((i, el) => $(el).text()).get();
+          expect(texts[0]).to.include('Alice');
+          expect(texts[0]).to.include('TechCorp');
+          expect(texts[1]).to.include('Bob');
+          expect(texts[1]).to.include('TechCorp');
 
-            const texts = $('.jq-repeat-workers').map((i, el) => $(el).text()).get();
-            expect(texts[0]).to.include('Alice');
-            expect(texts[0]).to.include('TechCorp');
-            expect(texts[1]).to.include('Bob');
-            expect(texts[1]).to.include('TechCorp');
-
-            done();
-          } catch (error) {
-            done(error);
-          }
-        }, 200);
-      }, 150);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      }, 200);
     }, 100);
   });
 
-  it.skip('should clean up nested scopes when parent items are removed (auto-populate not implemented)', function (done) {
+  it('should clean up nested scopes when parent items are removed', function (done) {
     const template = `
       <div jq-repeat="teams">
         <h3>{{ teamName }}</h3>
@@ -133,32 +116,82 @@ describe('Nested Templates', function () {
       });
 
       setTimeout(() => {
-        setTimeout(() => {
-          try {
-            const initialMemberCount = $('.jq-repeat-members').length;
-            console.log('Initial member elements:', initialMemberCount);
-            expect(initialMemberCount).to.be.greaterThan(0);
+        try {
+          const initialMemberCount = $('.jq-repeat-members').length;
+          expect(initialMemberCount).to.equal(3);
 
-            // Remove first team
-            $.scope.teams.shift();
+          const teamAScopes = Object.keys($.scope).filter(k => k.startsWith('members__'));
+          expect(teamAScopes.length).to.equal(2);
 
-            setTimeout(() => {
-              // Members from removed team should be gone
+          // Remove first team (Team A with 2 members).
+          $.scope.teams.shift();
+
+          setTimeout(() => {
+            try {
+              // Only Team B's single member should remain.
               const remainingMembers = $('.jq-repeat-members').length;
-              console.log('Remaining member elements:', remainingMembers);
-              expect(remainingMembers).to.be.lessThan(initialMemberCount);
+              expect(remainingMembers).to.equal(1);
+
+              // Team A's nested scope must be unregistered, Team B's kept.
+              const remainingScopes = Object.keys($.scope).filter(k => k.startsWith('members__'));
+              expect(remainingScopes.length).to.equal(1);
 
               done();
-            }, 100);
-          } catch (error) {
-            done(error);
-          }
-        }, 200);
-      }, 150);
+            } catch (error) {
+              done(error);
+            }
+          }, 100);
+        } catch (error) {
+          done(error);
+        }
+      }, 200);
     }, 100);
   });
 
-  it('should support multiple levels of nesting', function (done) {
+  it('should give each parent instance its own nested scope (no shared global)', function (done) {
+    const template = `
+      <div jq-repeat="depts">
+        <h2>{{ name }}</h2>
+        <ul><li jq-repeat="emps">{{ n }}</li></ul>
+      </div>
+    `;
+
+    $(template).appendTo('body');
+
+    setTimeout(() => {
+      $.scope.depts.push({ name: 'Eng', emps: [{ n: 'a1' }, { n: 'a2' }] });
+      $.scope.depts.push({ name: 'Sales', emps: [{ n: 's1' }] });
+
+      setTimeout(() => {
+        try {
+          // No shared global nested scope under the bare name.
+          expect($.scope.has('emps')).to.equal(false);
+
+          // Each dept owns its own emps list, isolated from the other.
+          expect($.scope.depts[0].__jqNested.emps.length).to.equal(2);
+          expect($.scope.depts[1].__jqNested.emps.length).to.equal(1);
+
+          // All three rendered together, selectable by the base class.
+          expect($('.jq-repeat-emps').length).to.equal(3);
+
+          // scopeGet() on a nested element returns that parent's list only.
+          const firstEmpsList = $('.jq-repeat-emps').first().scopeGet();
+          expect(firstEmpsList.length).to.equal(2);
+
+          // Mutating one parent's nested list does not affect the other.
+          $.scope.depts[0].__jqNested.emps.push({ n: 'a3' });
+          expect($('.jq-repeat-emps').length).to.equal(4);
+          expect($.scope.depts[1].__jqNested.emps.length).to.equal(1);
+
+          done();
+        } catch (error) {
+          done(error);
+        }
+      }, 200);
+    }, 100);
+  });
+
+  it('should support multiple levels of nesting with auto-populate', function (done) {
     const template = `
       <div jq-repeat="organizations">
         <h1>{{ orgName }}</h1>
@@ -178,41 +211,36 @@ describe('Nested Templates', function () {
           {
             deptName: 'Sales',
             people: [
-              { personName: 'Seller 1' }
+              { personName: 'Seller 1' },
+              { personName: 'Seller 2' }
             ]
           }
         ]
       });
 
       setTimeout(() => {
-        setTimeout(() => {
-          setTimeout(() => {
-            try {
-              console.log('Organizations:', $.scope.organizations.length);
-              console.log('Organization elements:', $('.jq-repeat-organizations').length);
+        try {
+          expect($.scope.organizations.length).to.equal(1);
+          expect($('.jq-repeat-organizations').length).to.equal(1);
 
-              expect($.scope.organizations.length).to.equal(1);
-              expect($('.jq-repeat-organizations').length).to.equal(1);
+          // Departments auto-populated.
+          expect($('.jq-repeat-departments').length).to.equal(1);
+          const deptList = $('.jq-repeat-departments').first().scopeGet();
+          expect(deptList.length).to.equal(1);
 
-              // Check if departments were created
-              if ($.scope.departments) {
-                console.log('Departments:', $.scope.departments.length);
-                console.log('Department elements:', $('.jq-repeat-departments').length);
-              }
+          // People auto-populated inside the department.
+          expect($('.jq-repeat-people').length).to.equal(2);
+          const peopleList = $('.jq-repeat-people').first().scopeGet();
+          expect(peopleList.length).to.equal(2);
 
-              // Check if people were created
-              if ($.scope.people) {
-                console.log('People:', $.scope.people.length);
-                console.log('People elements:', $('.jq-repeat-people').length);
-              }
+          // Reachable through the parent chain.
+          expect($.scope.organizations[0].__jqNested.departments[0].__jqNested.people.length).to.equal(2);
 
-              done();
-            } catch (error) {
-              done(error);
-            }
-          }, 200);
-        }, 200);
-      }, 150);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      }, 250);
     }, 100);
   });
 });
