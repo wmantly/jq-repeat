@@ -66,6 +66,32 @@ describe('Sorting Functionality', function () {
     }, 100);
   });
 
+  it('should treat jr-order-reverse as reversed when valueless or non-canonical truthy', function (done) {
+    // valueless boolean-style attribute
+    $('<div jq-repeat="revValueless" jr-order-by="points" jr-order-reverse>{{ player }}: {{ points }}</div>').appendTo('body');
+    // "1" truthy
+    $('<div jq-repeat="revOne" jr-order-by="points" jr-order-reverse="1">{{ player }}: {{ points }}</div>').appendTo('body');
+
+    setTimeout(() => {
+      $.scope.revValueless.push({ player: 'A', points: 1 }, { player: 'B', points: 2 });
+      $.scope.revOne.push({ player: 'A', points: 1 }, { player: 'B', points: 2 });
+      setTimeout(() => {
+        try {
+          // Both should be reversed (highest first).
+          expect($.scope.revValueless[0].points).to.equal(2);
+          expect($.scope.revValueless[1].points).to.equal(1);
+          expect($.scope.revOne[0].points).to.equal(2);
+          expect($.scope.revOne[1].points).to.equal(1);
+          expect($.scope.revValueless.__jqOrderReverse).to.equal(true);
+          expect($.scope.revOne.__jqOrderReverse).to.equal(true);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      }, 150);
+    }, 100);
+  });
+
   it('should sort strings alphabetically', function (done) {
     $('<div jq-repeat="sortStrings" jr-order-by="name">{{ name }}</div>').appendTo('body');
 

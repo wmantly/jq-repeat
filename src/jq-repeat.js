@@ -31,40 +31,43 @@ class CallbackQueue {
 (function($, Mustache) {
 	'use strict';
 
-	const throttleMap = {};
+	// --- Throttling ---
+	//
+	// `throttleMap` is keyed by an arbitrary key (for jq-repeat that key is the
+	// data item being updated). Updates are *trailing-edge*: the first call for a
+	// key schedules a single execution after `minDelay`, and any subsequent calls
+	// within that window are coalesced into that one execution. By default the
+	// latest arguments win; pass a `mergeFn` to combine arguments instead (used by
+	// `update()` so that rapid partial merges accumulate instead of clobbering
+	// each other).
+	const throttleMap = new Map();
 
-	function throttleCheck(key) {
-	    if (throttleMap[key] && throttleMap[key].args !== null) {
-	        // Call the callback with the stored arguments
-	        throttleMap[key].callBack(...throttleMap[key].args);
-	        throttleMap[key].args = null;
-	        
-	        // Schedule next check
-	        setTimeout(throttleCheck, throttleMap[key].minDelay, key);
-	    } else {
-	        // Clean up when no more pending calls
-	        delete throttleMap[key];
-	    }
+	function throttle(key, minDelay, callBack, mergeFn, ...args) {
+		if (throttleMap.has(key)) {
+			const entry = throttleMap.get(key);
+			entry.args = mergeFn ? mergeFn(entry.args, args) : args;
+			return;
+		}
+
+		const entry = { args, callBack };
+		throttleMap.set(key, entry);
+
+		entry.timer = setTimeout(() => {
+			const current = throttleMap.get(key);
+			if (current === entry) {
+				throttleMap.delete(key);
+				callBack(...current.args);
+			}
+		}, minDelay);
 	}
 
-	function throttle(key, minDelay, callBack, ...args) {
-	    if (throttleMap[key]) {
-	        // Update arguments for pending call
-	        throttleMap[key].args = args;
-	    } else {
-	        // First call - execute immediately and set up throttling
-	        throttleMap[key] = {
-	            args: null,
-	            minDelay,
-	            callBack,
-	        };
-
-	        // Execute immediately
-	        callBack(...args);
-	        
-	        // Schedule throttle check
-	        setTimeout(throttleCheck, minDelay, key);
-	    }
+	// Cancel a pending throttled call (e.g. when its item is removed/destroyed).
+	function cancelThrottle(key) {
+		const entry = throttleMap.get(key);
+		if (entry) {
+			clearTimeout(entry.timer);
+			throttleMap.delete(key);
+		}
 	}
 
 	// Internal scope object for managing repeat lists
@@ -77,47 +80,80 @@ class CallbackQueue {
 		configurable: true
 	});
 
+	// Monotonic counter used to derive a unique scope id for each nested
+	// template instance, so multiple parents can each own their own nested list.
+	let nextNestedId = 0;
+
+	// Returns a throwaway empty array that only writes itself into the scope the
+	// first time it is actually mutated. This lets `$.scope.foo.push(...)` work
+	// before a `[jq-repeat="foo"]` element exists (the "pre-populate" workflow)
+	// without plain reads of `$.scope.foo` permanently polluting the scope.
+	function createLazyScopeArray(obj, prop) {
+		const arr = [];
+		let registered = false;
+		const ensure = () => {
+			if (!registered) {
+				registered = true;
+				obj[prop] = arr;
+			}
+		};
+		return new Proxy(arr, {
+			get(target, key, receiver) {
+				const val = Reflect.get(target, key, receiver);
+				// Treat any method access as "intent to use as an array" and
+				// materialize. Pure property reads (length, indices) stay lazy.
+				if (typeof val === 'function') {
+					ensure();
+					return val.bind(target);
+				}
+				return val;
+			},
+			set(target, key, value, receiver) {
+				ensure();
+				return Reflect.set(target, key, value, receiver);
+			}
+		});
+	}
+
 	$.scope = new Proxy(_scope, {
 		get(obj, prop) {
-			if (!obj[prop]) {
-				obj[prop] = [];
+			if (typeof prop === 'symbol') {
+				return Reflect.get(obj, prop);
 			}
-			return Reflect.get(...arguments);
+			if (prop === 'has') {
+				return (name) => Object.prototype.hasOwnProperty.call(obj, name);
+			}
+			if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+				return Reflect.get(obj, prop);
+			}
+			return createLazyScopeArray(obj, prop);
 		},
 		set(obj, prop, value) {
 			return Reflect.set(...arguments);
 		},
 	});
 
-	// --- Helper function to clean up nested jq-repeat elements ---
-	function cleanupNestedRepeats($element) {
-		if (!$element || !$element.length) return;
-		
-		// Find all nested jq-repeat elements within this element
-		const $nestedRepeats = $element.find('[jq-repeat-scope]');
-		
-		$nestedRepeats.each(function() {
-			const $nested = $(this);
-			const nestedScopeId = $nested.attr('jq-repeat-scope');
-			
-			if (nestedScopeId && $.scope[nestedScopeId]) {
-				// Clean up the nested scope instance
-				const nestedInstance = $.scope[nestedScopeId];
-				
-				// Call take on all items to clean up their DOM elements
-				for (let i = 0; i < nestedInstance.length; i++) {
-					if (nestedInstance[i] && nestedInstance[i].__jq_$el) {
-						nestedInstance.__take(nestedInstance[i].__jq_$el, nestedInstance[i], nestedInstance);
-					}
-				}
-				
-				// Clear the array
-				nestedInstance.length = 0;
-				
-				// Remove from global scope
-				delete $.scope[nestedScopeId];
+	// --- Helper: clean up the nested scopes attached to a parent item ---
+	//
+	// Nested lists live on their parent item (item.__jqNested) rather than as a
+	// single shared global, so removing a parent item must empty each of its own
+	// nested lists and drop them from the registry. `empty()` recurses, so
+	// deeper nesting (orgs -> depts -> people) cleans up correctly.
+	function cleanupNestedRepeats(item) {
+		if (!item || !item.__jqNested) return;
+		const nested = item.__jqNested;
+		for (const baseName of Object.keys(nested)) {
+			const nestedList = nested[baseName];
+			if (nestedList && typeof nestedList.empty === 'function') {
+				nestedList.empty();
 			}
-		});
+			if (nestedList) {
+				delete _scope[nestedList.__jqRepeatId];
+			}
+		}
+		for (const baseName of Object.keys(nested)) {
+			delete nested[baseName];
+		}
 	}
 
 	// --- ES6 Class for jq-repeat lists ---
@@ -128,10 +164,15 @@ class CallbackQueue {
 			return Array;
 		}
 
-		constructor(element, scopeId, options, parentData, parentId, parentIndex, templateHTML, nestedTemplates) {
+		constructor(element, scopeId, options, parentData, parentId, parentIndex, templateHTML, nestedTemplates, baseScopeId) {
 			super();
 
 			this.__jqRepeatId = scopeId;
+			// The user-facing scope name (the bare `jq-repeat="..."` value). For
+			// top-level scopes this equals scopeId; for nested scopes scopeId is a
+			// unique derived id while baseScopeId stays the shared name used for the
+			// CSS class so all instances of the same nested template stay selectable.
+			this.__jqBaseId = baseScopeId || scopeId;
 			this.options = options;
 
 			// Store the actual indexKey property name for quick access
@@ -142,7 +183,12 @@ class CallbackQueue {
 			// Store sorting options
 			if (options && options.orderBy !== undefined) {
 				this.__jqOrderBy = options.orderBy;
-				this.__jqOrderReverse = options.orderReverse === 'true';
+				// Boolean-style attribute: present with any non-explicitly-false
+				// value (including valueless, "true", "1") means reversed.
+				const rev = options.orderReverse;
+				this.__jqOrderReverse =
+					rev !== undefined && rev !== null && rev !== false &&
+					rev !== 'false' && rev !== '0' && rev !== 'no' && rev !== 'off';
 			} else {
 				this.__jqOrderBy = null;
 				this.__jqOrderReverse = false;
@@ -156,18 +202,6 @@ class CallbackQueue {
 
 			this.$this = $(`<script type="x-tmpl-mustache" id="jq-repeat-holder-${this.__jqRepeatId}"><\/script>`);
 			$(element).replaceWith(this.$this);
-
-			let tokenArray = Mustache.parse(this.__jqTemplate);
-
-			this.templateKeys = [];
-
-			for(let token of tokenArray){
-				if(['name', '#', '^'].includes(token[0])){
-					this.templateKeys.push(token[1]);
-				}
-			}
-
-			this.templateKeysObj = this.__parseTemplateKeys(tokenArray)
 
 			this.parseKeys = {};
 
@@ -187,64 +221,6 @@ class CallbackQueue {
 				});
 			}
 		}
-
-/*		__parseTemplateKeys(parsed, obj){
-			for(let token of parsed){
-				if(['name', '^'].includes(token[0])){
-					obj[token[1].split('.')[0].split('[')[0]] = null;
-				}
-				if(token[0] === '#'){
-					obj[token[1]] = {};
-					this.__parseTemplateKeys(token[4], obj[token[1]])
-				}
-				if(token[0] === '&'){
-					obj[token[1].split('.')[0].split('[')[0]] = null;
-				}
-			}
-		}*/
-
-	__parseTemplateKeys(tokenArray){
-		const keyMap = {};
-
-		tokenArray.forEach(token => {
-		const type = token[0];
-		const key = token[1];
-
-		// We only care about tokens that represent a variable, section, or partial
-		if (['name', '#', '^', '>', '&'].includes(type)) {
-		  // Handle dot notation and array-like keys
-		  const keyParts = key.split('.');
-		  let currentMap = keyMap;
-
-		  keyParts.forEach((part, index) => {
-		    // Check for array notation like `user[0]` and treat it as a plain key
-		    const cleanPart = part.split('[')[0];
-
-		    if (index === keyParts.length - 1) {
-		      // This is the last part of the key path
-		      if (type === '#' || type === '^') {
-		        // For sections, make a recursive call to get nested keys
-		        currentMap[cleanPart] = this.__parseTemplateKeys(token[4]);
-		      } else {
-		        // For simple variables or partials, just set the value to null
-		        currentMap[cleanPart] = null;
-		      }
-		    } else {
-		      // This is an intermediate part of the key path
-		      // If the part doesn't exist or isn't an object, create a new object
-		      if (!currentMap[cleanPart] || typeof currentMap[cleanPart] !== 'object') {
-		        currentMap[cleanPart] = {};
-		      }
-		      // Move to the next level of the object
-		      currentMap = currentMap[cleanPart];
-		    }
-		  });
-		}
-		});
-
-		return keyMap;
-	}
-
 
 		/**
 		 * Compares two items based on the __jqOrderBy key and __jqOrderReverse flag.
@@ -306,6 +282,40 @@ class CallbackQueue {
 		    return this.length;
 		}
 
+		// Render a single item's jQuery element at `index` for `item`, applying the
+		// class/scope/index attributes consistently.
+		__renderItem(index, item) {
+			const renderData = this.__buildData(index, item);
+			const $render = $(Mustache.render(this.__jqTemplate, renderData))
+				.addClass("jq-repeat-" + this.__jqBaseId)
+				.attr("jq-repeat-scope", this.__jqRepeatId);
+
+			if (this.__jqIndexKey && item.hasOwnProperty(this.__jqIndexKey)) {
+				$render.attr("jq-repeat-index", item[this.__jqIndexKey]);
+			} else {
+				$render.attr("jq-repeat-index", index);
+			}
+
+			Object.defineProperty(item, "__jq_$el", {
+				value: $render,
+				writable: true,
+				enumerable: false,
+				configurable: true,
+			});
+
+			return $render;
+		}
+
+		__refreshIndexAttr(index, item) {
+			if (!item || !item.__jq_$el) return;
+			if (this.__jqIndexKey && item.hasOwnProperty(this.__jqIndexKey)) {
+				item.__jq_$el.attr("jq-repeat-index", item[this.__jqIndexKey]);
+			} else {
+				item.__jq_$el.attr("jq-repeat-index", index);
+			}
+			item.__jq_$el.attr("jq-repeat-scope", this.__jqRepeatId);
+		}
+
 		splice(inputValue, ...args) {
 			let index;
 			let wasIndexLookup = false;
@@ -356,10 +366,12 @@ class CallbackQueue {
 			// --- DOM REMOVAL with nested cleanup ---
 			for (let i = 0; i < removedItems.length; i++) {
 				let item = removedItems[i];
-				if (item && item.__jq_$el) {
-					// Clean up nested repeats before removing the element
-					cleanupNestedRepeats(item.__jq_$el);
-					this.__take(item.__jq_$el, item, this);
+				if (item) {
+					cleanupNestedRepeats(item);
+					cancelThrottle(item);
+					if (item.__jq_$el) {
+						this.__take(item.__jq_$el, item, this);
+					}
 				}
 			}
 
@@ -377,16 +389,7 @@ class CallbackQueue {
 
 				for (let i = 0; i < toAdd.length; i++) {
 					let newItemData = toAdd[i];
-					let renderData = this.__buildData(index + i, newItemData);
-					let $render = $(Mustache.render(this.__jqTemplate, renderData))
-						.addClass("jq-repeat-" + this.__jqRepeatId)
-						.attr("jq-repeat-scope", this.__jqRepeatId);
-
-					if (this.__jqIndexKey && newItemData.hasOwnProperty(this.__jqIndexKey)) {
-						$render.attr("jq-repeat-index", newItemData[this.__jqIndexKey]);
-					} else {
-						$render.attr("jq-repeat-index", index + i);
-					}
+					let $render = this.__renderItem(index + i, newItemData);
 
 					if (previousElement && previousElement.length) {
 						previousElement.after($render);
@@ -395,44 +398,68 @@ class CallbackQueue {
 					}
 					previousElement = $render;
 
-					Object.defineProperty(newItemData, "__jq_$el", {
-						value: $render,
-						writable: true,
-						enumerable: false,
-						configurable: true,
-					});
-
 					this.__put($render, newItemData, this);
 				}
 			}
 
 			// --- RE-INDEXING REMAINING ELEMENTS ---
 			for (let i = index; i < this.length; i++) {
-				if (this[i] && this[i].__jq_$el) {
-					if (this.__jqIndexKey && this[i].hasOwnProperty(this.__jqIndexKey)) {
-						this[i].__jq_$el.attr("jq-repeat-index", this[i][this.__jqIndexKey]);
-					} else {
-						this[i].__jq_$el.attr("jq-repeat-index", i);
-					}
-					this[i].__jq_$el.attr("jq-repeat-scope", this.__jqRepeatId);
-				}
+				this.__refreshIndexAttr(i, this[i]);
 			}
 
 			return nativeSpliceResult;
 		}
 
 		push(...args) {
+			if (args.length === 0) return this.length;
 			if (!this.__jqOrderBy) {
-				const index = this.length || 0;
-				return this.splice(index, 0, ...args);
+				this.splice(this.length, 0, ...args);
+				return this.length;
+			}
+			if (args.length === 1) {
+				this.splice(this.__findInsertionIndex(args[0]), 0, args[0]);
+				return this.length;
+			}
+			this.__sortedBatchAdd(args);
+			return this.length;
+		}
+
+		// Add many items to a sorted list in a single pass: append them all,
+		// stable-sort the whole list once, then reorder the DOM once. This is
+		// O((n+m) log(n+m)) + O(n+m) DOM work instead of the O(n*m) re-indexing
+		// that per-item splice insertion would do.
+		__sortedBatchAdd(newItems) {
+			super.push(...newItems);
+
+			Array.prototype.sort.call(this, this.__compareItems.bind(this));
+
+			// Detach every existing element so we can re-insert in the new order.
+			for (let i = 0; i < this.length; i++) {
+				if (this[i] && this[i].__jq_$el) {
+					this[i].__jq_$el.detach();
+				}
 			}
 
-			for (let i = 0; i < args.length; ++i) {
-				const newItem = args[i];
-				const insertionIndex = this.__findInsertionIndex(newItem);
-				this.splice(insertionIndex, 0, newItem);
+			let previousElement = this.$this;
+			for (let i = 0; i < this.length; i++) {
+				const item = this[i];
+				if (!item) continue;
+
+				let $el = item.__jq_$el;
+				if (!$el || !$el.length) {
+					// New item: render fresh.
+					$el = this.__renderItem(i, item);
+					this.__put($el, item, this);
+				}
+				this.__refreshIndexAttr(i, item);
+
+				if (previousElement && previousElement.length) {
+					previousElement.after($el);
+				} else {
+					this.$this.after($el);
+				}
+				previousElement = $el;
 			}
-			return this.length;
 		}
 
 		pop() {
@@ -440,67 +467,31 @@ class CallbackQueue {
 		}
 
 		reverse() {
-			if (!this.__jqOrderBy) {
-				let elementsToReverse = [];
-				for (let i = 0; i < this.length; i++) {
-					if (this[i] && this[i].__jq_$el) {
-						elementsToReverse.push(this[i].__jq_$el.detach());
-					}
-				}
-
-				elementsToReverse.reverse();
-
-				let lastElement = this.$this;
-				for (let i = 0; i < elementsToReverse.length; i++) {
-					lastElement.after(elementsToReverse[i]);
-					lastElement = elementsToReverse[i];
-				}
-
-				super.reverse();
-
-				for (let i = 0; i < this.length; i++) {
-					if (this[i] && this[i].__jq_$el) {
-						if (!this.__jqIndexKey) {
-							this[i].__jq_$el.attr("jq-repeat-index", i);
-						}
-					}
-				}
-			} else {
+			if (this.__jqOrderBy) {
 				console.warn(`jq-repeat: Calling 'reverse()' on a list with 'jr-order-by' defined. This operation might not yield the expected stable sorted order.`);
+			}
 
-				let detachedElements = [];
-				for (let i = 0; i < this.length; i++) {
-					if (this[i] && this[i].__jq_$el) {
-						detachedElements.push(this[i].__jq_$el.detach());
-					}
+			// Reuse the existing elements (detached + re-inserted) rather than
+			// re-rendering, so nothing is leaked and element identity is preserved.
+			for (let i = 0; i < this.length; i++) {
+				if (this[i] && this[i].__jq_$el) {
+					this[i].__jq_$el.detach();
 				}
+			}
 
-				super.reverse();
+			super.reverse();
 
-				let previousElement = this.$this;
-				for (let i = 0; i < this.length; i++) {
-					const item = this[i];
-					if (item && item.__jq_$el) {
-						const renderData = this.__buildData(i, item);
-						const $render = $(Mustache.render(this.__jqTemplate, renderData))
-							.addClass("jq-repeat-" + this.__jqRepeatId)
-							.attr("jq-repeat-scope", this.__jqRepeatId);
-
-						if (this.__jqIndexKey && item.hasOwnProperty(this.__jqIndexKey)) {
-							$render.attr("jq-repeat-index", item[this.__jqIndexKey]);
-						} else {
-							$render.attr("jq-repeat-index", i);
-						}
-
-						previousElement.after($render);
-						Object.defineProperty(item, "__jq_$el", {
-							value: $render,
-							writable: true,
-							enumerable: false,
-							configurable: true,
-						});
-						previousElement = $render;
+			let previousElement = this.$this;
+			for (let i = 0; i < this.length; i++) {
+				const item = this[i];
+				if (item && item.__jq_$el) {
+					this.__refreshIndexAttr(i, item);
+					if (previousElement && previousElement.length) {
+						previousElement.after(item.__jq_$el);
+					} else {
+						this.$this.after(item.__jq_$el);
 					}
+					previousElement = item.__jq_$el;
 				}
 			}
 			return this;
@@ -527,15 +518,14 @@ class CallbackQueue {
 		}
 
 		unshift(...args) {
+			if (args.length === 0) return this.length;
 			if (!this.__jqOrderBy) {
-				return this.splice(0, 0, ...args);
+				this.splice(0, 0, ...args);
+				return this.length;
 			}
-
-			for (let i = args.length - 1; i >= 0; --i) {
-				const newItem = args[i];
-				const insertionIndex = this.__findInsertionIndex(newItem);
-				this.splice(insertionIndex, 0, newItem);
-			}
+			// In a sorted list "unshift" has no positional meaning; insert in
+			// sorted order just like push would.
+			this.__sortedBatchAdd(args);
 			return this.length;
 		}
 
@@ -623,57 +613,61 @@ class CallbackQueue {
 		        return null;
 		    }
 
-		    const throttleKey = this.__jqRepeatId + '_' + index;
+		    // Snapshot the item by reference at call time and key the throttled
+		    // update by that reference. This way an update can't accidentally land
+		    // on the wrong item if a previous (now-applied) update reordered the
+		    // list, and a pending update for a removed item can be cancelled.
+		    const item = this[index];
 		    const boundUpdateDom = this.__updateDom.bind(this);
-		    
-		    return throttle(throttleKey, 50, boundUpdateDom, index, data);
+
+		    // Merge successive partial updates so nothing is lost inside the
+		    // throttle window (instead of "last write wins").
+		    const mergeFn = (prev, next) => [prev[0], $.extend(true, {}, prev[1], next[1])];
+
+		    throttle(item, 50, boundUpdateDom, mergeFn, item, data);
+		    return item;
 		}
 
-		__updateDom(index, data){
-			let originalItemData = null;
-			let originalDOMEl = null;
+		__updateDom(item, data){
+			// Re-resolve the item's current index. It may have moved (sorted list)
+			// or been removed entirely since the update was scheduled.
+			const index = this.indexOf(item);
+			if (index === -1) {
+				// The item is no longer in the list (removed/destroyed). Nothing
+				// to render; a pending update for it was also cancelled on removal.
+				return null;
+			}
 
-            if (!this[index].__jq_$el) {
-                console.warn(`jq-repeat: Item at index ${index} exists, but its DOM element reference (__jq_$el) is null or missing for scope '${this.__jqRepeatId}'.`);
-                return null;
-            }
+			if (!item.__jq_$el) {
+				console.warn(`jq-repeat: Item at index ${index} exists, but its DOM element reference (__jq_$el) is null or missing for scope '${this.__jqRepeatId}'.`);
+				return null;
+			}
 
-			originalItemData = $.extend(true, {}, this[index]);
-			originalDOMEl = this[index].__jq_$el;
+			const originalItemData = $.extend(true, {}, item);
+			const originalDOMEl = item.__jq_$el;
 
-			// Clean up nested repeats before updating
-			cleanupNestedRepeats(originalDOMEl);
+			// Clean up nested repeats before updating (the parent element is about
+			// to be re-rendered, which re-injects fresh nested templates).
+			cleanupNestedRepeats(item);
 
 			// Merge new data into the existing item
-			this[index] = $.extend(true, this[index], data);
+			$.extend(true, item, data);
 
 			// Check if sorting position has changed
 			if (this.__jqOrderBy) {
-				// Simplified check for position change
-				if (this.__compareItems(originalItemData, this[index]) !== 0) {
-					const itemToMove = this[index];
-
+				if (this.__compareItems(originalItemData, item) !== 0) {
 					// Remove from DOM and array
 					if (originalDOMEl && originalDOMEl.length) {
-						this.__take(originalDOMEl, itemToMove, this);
+						this.__take(originalDOMEl, item, this);
 					}
 					super.splice(index, 1);
 
 					// Find new insertion point and insert
-					const newInsertionIndex = this.__findInsertionIndex(itemToMove);
-					super.splice(newInsertionIndex, 0, itemToMove);
+					const newInsertionIndex = this.__findInsertionIndex(item);
+					super.splice(newInsertionIndex, 0, item);
 
 					// Render at new position
-					const renderData = this.__buildData(newInsertionIndex, itemToMove);
-					const $render = $(Mustache.render(this.__jqTemplate, renderData))
-						.addClass("jq-repeat-" + this.__jqRepeatId)
-						.attr("jq-repeat-scope", this.__jqRepeatId);
-
-					if (this.__jqIndexKey && itemToMove.hasOwnProperty(this.__jqIndexKey)) {
-						$render.attr('jq-repeat-index', itemToMove[this.__jqIndexKey]);
-					} else {
-						$render.attr('jq-repeat-index', newInsertionIndex);
-					}
+					const $render = this.__renderItem(newInsertionIndex, item);
 
 					let previousElement = null;
 					if (newInsertionIndex > 0 && this[newInsertionIndex - 1] && this[newInsertionIndex - 1].__jq_$el) {
@@ -688,14 +682,7 @@ class CallbackQueue {
 						this.$this.after($render);
 					}
 
-					Object.defineProperty(itemToMove, "__jq_$el", {
-						value: $render,
-						writable: true,
-						enumerable: false,
-						configurable: true,
-					});
-
-					this.__put($render, itemToMove, this);
+					this.__put($render, item, this);
 
 					// Re-index elements
 					for (let i = 0; i < this.length; i++) {
@@ -709,20 +696,20 @@ class CallbackQueue {
 			}
 
 			// Standard update (no position change)
-			const renderData = this.__buildData(index, this[index]);
+			const renderData = this.__buildData(index, item);
 			const $render = $(Mustache.render(this.__jqTemplate, renderData));
 
 			$render.attr('jq-repeat-scope', this.__jqRepeatId);
-			if (this.__jqIndexKey && this[index].hasOwnProperty(this.__jqIndexKey)) {
-				$render.attr('jq-repeat-index', this[index][this.__jqIndexKey]);
+			if (this.__jqIndexKey && item.hasOwnProperty(this.__jqIndexKey)) {
+				$render.attr('jq-repeat-index', item[this.__jqIndexKey]);
 			} else {
 				$render.attr('jq-repeat-index', index);
 			}
-			$render.addClass(`jq-repeat-${this.__jqRepeatId}`);
+			$render.addClass(`jq-repeat-${this.__jqBaseId}`);
 
-			this.__putUpdate(originalDOMEl, $render, this[index], this);
+			this.__putUpdate(originalDOMEl, $render, item, this);
 
-			this[index].__jq_$el = $render;
+			item.__jq_$el = $render;
 			return $render;
 		}
 
@@ -775,30 +762,55 @@ class CallbackQueue {
 		}
 
 		__parseNestedTemplates(index, data) {
-			let templates = [];
-			let tempData = {
-				...data,
-				_parent: data,
-			};
+			const templates = [];
+
+			// The nested template's parent must point back at THIS item, so tag it
+			// with this item's index (or custom index-key value) — not the parent
+			// list's own parent index.
+			const parentIndexAttr = (this.__jqIndexKey && data && data.hasOwnProperty(this.__jqIndexKey))
+				? data[this.__jqIndexKey]
+				: index;
 
 			for (let idx in this.nestedTemplates) {
 				let $el = $(`${this.nestedTemplates[idx]}`);
 
 				$el.attr('jq-repeat-parent', this.__jqRepeatId);
-				$el.attr('jq-repeat-parent-index', this.__jqParentIndex);
+				$el.attr('jq-repeat-parent-index', parentIndexAttr);
 				templates[idx] = $el[0].outerHTML;
 			}
 			return templates;
+		}
+
+		// Tear down this scope: remove all items (cascading nested cleanup and
+		// cancellation of any pending throttled updates), drop the placeholder
+		// element, detach from the parent's nested map, and unregister the scope.
+		destroy() {
+			this.empty();
+
+			if (this._parentData && this._parentData.__jqNested) {
+				for (const baseName of Object.keys(this._parentData.__jqNested)) {
+					if (this._parentData.__jqNested[baseName] === this) {
+						delete this._parentData.__jqNested[baseName];
+					}
+				}
+			}
+
+			if (this.$this && this.$this.length) {
+				this.$this.remove();
+			}
+
+			delete _scope[this.__jqRepeatId];
+			return this;
 		}
 	}
 
 	var make = function(element) {
 		const $this = $(element);
 
-		const scopeId = $this.attr('jq-repeat');
-		if (!scopeId) {
+		const baseScopeId = $this.attr('jq-repeat');
+		if (!baseScopeId) {
 			console.error("jq-repeat: Element missing 'jq-repeat' attribute:", element);
-			return;
+			return undefined;
 		}
 
 		const options = {};
@@ -809,35 +821,44 @@ class CallbackQueue {
 			}
 		});
 
-		// const parent = $this.scopeGet();
 		let parentData = null;
 		let parentId = null;
 		let parentIndex = null;
-		if ($this.attr('jq-repeat-parent')) {
+		const hasParent = !!$this.attr('jq-repeat-parent');
+		if (hasParent) {
 			parentId = $this.attr('jq-repeat-parent');
 			const parentElement = $this.parent().closest(`[jq-repeat-scope="${parentId}"]`);
 			if (parentElement.length) {
 				parentIndex = parentElement.attr('jq-repeat-index');
-				if ($.scope[parentId] && $.scope[parentId].__jqIndexKey && $.scope[parentId].getByKey($.scope[parentId].__jqIndexKey, parentIndex)) {
-					parentData = $.scope[parentId].getByKey($.scope[parentId].__jqIndexKey, parentIndex);
-				} else if ($.scope[parentId] && !$.scope[parentId].__jqIndexKey && !isNaN(Number(parentIndex))) {
-					parentData = $.scope[parentId][Number(parentIndex)];
+				if (Object.prototype.hasOwnProperty.call(_scope, parentId) && _scope[parentId]) {
+					const parentList = _scope[parentId];
+					if (parentList.__jqIndexKey) {
+						parentData = parentList.getByKey(parentList.__jqIndexKey, parentIndex);
+					} else if (!isNaN(Number(parentIndex))) {
+						parentData = parentList[Number(parentIndex)];
+					}
 				}
-				else {
-					console.warn(`jq-repeat: Parent scope '${parentId}' or item with index/ID '${parentIndex}' not found for nested element.`);
+				if (!parentData) {
+					console.warn(`jq-repeat: Parent item for nested scope not found (parent='${parentId}', index='${parentIndex}').`);
 				}
 			} else {
 				console.warn(`jq-repeat: Could not find parent element for scope '${parentId}'.`);
 			}
 		}
 
+		// Top-level scopes keep the bare name as their id (so `$.scope.foo` and
+		// `$.scope[uniqueId]` line up); nested scopes get a unique derived id so
+		// multiple parent instances don't clobber one global slot.
+		let scopeId = baseScopeId;
+		if (hasParent) {
+			scopeId = baseScopeId + '__' + (nextNestedId++);
+		}
 
 		const nestedTemplates = [];
 		$this.find('[jq-repeat]').each((idx, el) => {
 			let templateIdx = nestedTemplates.length;
 			let template = `${el.outerHTML}`;
 			nestedTemplates.push(template);
-			// el.setAttribute('jq-parent-nestedTemplate-index', templateIdx)
 			 $(el).replaceWith(`{{{ nestedTemplates.${templateIdx} }}}`);
 		});
 
@@ -853,11 +874,46 @@ class CallbackQueue {
 			parentId,
 			parentIndex,
 			templateHTML,
-			nestedTemplates
+			nestedTemplates,
+			baseScopeId
 		);
 
-		const tempPreExistingData = _scope[scopeId] || [];
+		// If a scope with this id was already initialized (e.g. a top-level
+		// template re-added to the DOM), tear the old one down before replacing it
+		// so its DOM and nested scopes don't leak.
+		const existing = _scope[scopeId];
+		if (existing && existing instanceof RepeatList && existing !== repeatListInstance) {
+			existing.destroy();
+		}
+
+		// Preserve pre-existing data pushed before the template existed (only
+		// meaningful for top-level scopes, which share id and base name).
+		let tempPreExistingData;
+		if (hasParent) {
+			tempPreExistingData = [];
+		} else {
+			tempPreExistingData = _scope[baseScopeId] || [];
+		}
+
 		_scope[scopeId] = repeatListInstance;
+
+		// Register on the parent item and auto-populate from the parent's data
+		// array (keyed by the nested scope's base name).
+		if (hasParent && parentData) {
+			if (!Object.prototype.hasOwnProperty.call(parentData, '__jqNested')) {
+				Object.defineProperty(parentData, '__jqNested', {
+					value: {},
+					writable: true,
+					enumerable: false,
+					configurable: true,
+				});
+			}
+			parentData.__jqNested[baseScopeId] = repeatListInstance;
+
+			if (Array.isArray(parentData[baseScopeId])) {
+				repeatListInstance.push(...parentData[baseScopeId]);
+			}
+		}
 
 		// Process pre-existing data
 		for (const prop of Object.keys(tempPreExistingData)) {
@@ -869,6 +925,8 @@ class CallbackQueue {
 				}
 			}
 		}
+
+		return repeatListInstance;
 	};
 
 	// --- jQuery Plugin Methods ---
@@ -880,19 +938,22 @@ class CallbackQueue {
 	$.fn.scopeGet = function() {
 		let $el = this.scopeGetEl();
 		if ($el && $el.attr('jq-repeat-scope')) {
-			return $.scope[$el.attr('jq-repeat-scope')];
+			const list = _scope[$el.attr('jq-repeat-scope')];
+			if (list && list.__jqRepeatId) {
+				return list;
+			}
 		}
 		return undefined;
 	};
 
-			$.fn.scopeItem = function() {
+		$.fn.scopeItem = function() {
 		let $el = this.scopeGetEl();
 		if ($el) {
 			const scopeId = $el.attr('jq-repeat-scope');
 			const indexOrId = $el.attr('jq-repeat-index');
-			const scopeInstance = $.scope[scopeId];
+			const scopeInstance = _scope[scopeId];
 
-			if (scopeInstance) {
+			if (scopeInstance && scopeInstance.__jqRepeatId) {
 				if (scopeInstance.__jqIndexKey) {
 					return scopeInstance.getByKey(scopeInstance.__jqIndexKey, indexOrId);
 				} else {
@@ -908,9 +969,9 @@ class CallbackQueue {
 		if ($el) {
 			const scopeId = $el.attr('jq-repeat-scope');
 			const indexOrId = $el.attr('jq-repeat-index');
-			const scopeInstance = $.scope[scopeId];
+			const scopeInstance = _scope[scopeId];
 
-			if (scopeInstance) {
+			if (scopeInstance && scopeInstance.__jqRepeatId) {
 				if (scopeInstance.__jqIndexKey) {
 					scopeInstance.update(scopeInstance.__jqIndexKey, indexOrId, data);
 				} else {
@@ -925,9 +986,9 @@ class CallbackQueue {
 		if ($el) {
 			const scopeId = $el.attr('jq-repeat-scope');
 			const indexOrId = $el.attr('jq-repeat-index');
-			const scopeInstance = $.scope[scopeId];
+			const scopeInstance = _scope[scopeId];
 
-			if (scopeInstance) {
+			if (scopeInstance && scopeInstance.__jqRepeatId) {
 				if (scopeInstance.__jqIndexKey) {
 					scopeInstance.remove(indexOrId);
 				} else {
@@ -937,40 +998,49 @@ class CallbackQueue {
 		}
 	};
 
+	$.fn.scopeDestroy = function() {
+		const list = this.scopeGet();
+		if (list && typeof list.destroy === 'function') {
+			list.destroy();
+		}
+		return this;
+	};
+
 	// --- Document Ready and MutationObserver for Auto-Initialization ---
+
+	// A `[jq-repeat]` element that lives inside another `[jq-repeat]` template
+	// is extracted into that parent's nested templates during the parent's
+	// `make()`, so it must not be initialized independently here. Only process
+	// "standalone" repeats — those with no `[jq-repeat]` ancestor.
+	function isStandaloneRepeat(el) {
+		return !$(el).parent().closest('[jq-repeat]').length;
+	}
 
 	$(document).ready(function() {
 		const observer = new MutationObserver(function(mutationsList) {
-			mutationsList.forEach(mutation => {
-				if (mutation.type === 'childList') {
-					const addedNodes = mutation.addedNodes;
-					addedNodes.forEach(node => {
-						if (node.nodeType === Node.ELEMENT_NODE) {
-							// Check if the added node itself is a jq-repeat
-							if (node.hasAttribute("jq-repeat")) {
-								const scopeId = $(node).attr('jq-repeat');
-								make($(node));
-								if (scopeId && $.scope[scopeId]) {
-									_scope.onNew.call($.scope[scopeId]);
-								}
-								return;
-							} else {
-								// Check if any of its descendants are jq-repeat
-								const foundRepeats = node.querySelectorAll("[jq-repeat]");
-								if (foundRepeats.length > 0) {
-									foundRepeats.forEach(foundNode => {
-										const scopeId = $(foundNode).attr('jq-repeat');
-										make($(foundNode));
-										if (scopeId && $.scope[scopeId]) {
-											_scope.onNew.call($.scope[scopeId]);
-										}
-									});
-								}
-							}
-						}
-					});
+			const candidates = [];
+			for (const mutation of mutationsList) {
+				if (mutation.type !== 'childList') continue;
+				for (const node of mutation.addedNodes) {
+					if (node.nodeType !== Node.ELEMENT_NODE) continue;
+					if (node.hasAttribute('jq-repeat')) {
+						candidates.push(node);
+					} else {
+						const found = node.querySelectorAll('[jq-repeat]');
+						for (const f of found) candidates.push(f);
+					}
 				}
-			});
+			}
+			if (!candidates.length) return;
+
+			const seen = new Set();
+			for (const el of candidates) {
+				if (seen.has(el)) continue;
+				seen.add(el);
+				if (!isStandaloneRepeat(el)) continue;
+				const list = make(el);
+				if (list) _scope.onNew.call(list);
+			}
 		});
 
 		observer.observe(document.body, {
@@ -978,16 +1048,16 @@ class CallbackQueue {
 			subtree: true
 		});
 
-		// Initialize any jq-repeat elements already present in the DOM on load
-		$('[jq-repeat]').each(function(key, value) {
-			if ($(value).closest('body').length !== 0) {
-				const scopeId = $(value).attr('jq-repeat');
-				make($(value));
-				if (scopeId && $.scope[scopeId]) {
-					_scope.onNew.call($.scope[scopeId]);
-				}
-			}
+		// Initialize any jq-repeat elements already present in the DOM on load.
+		// Snapshot the standalone ones first so make()'s DOM mutations don't
+		// change which elements look standalone mid-loop.
+		const initial = $('[jq-repeat]').get().filter(el => {
+			return $(el).closest('body').length !== 0 && isStandaloneRepeat(el);
 		});
+		for (const el of initial) {
+			const list = make(el);
+			if (list) _scope.onNew.call(list);
+		}
 	});
 
 })(jQuery, Mustache);

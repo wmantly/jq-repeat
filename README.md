@@ -54,6 +54,33 @@ $.scope.toDo.push(
 );
 ```
 
+## Upgrading from 2.0.x
+
+2.1.0 is backward-compatible for typical (flat-list, event-driven) usage. Two
+patterns need attention when upgrading:
+
+1. **Nested scopes are no longer on `$.scope.<name>`.** Previously a nested
+   `jq-repeat="employees"` registered a single shared `$.scope.employees`
+   (which never auto-populated). Now each parent instance owns its own nested
+   list and **auto-populates** from the parent item's matching-named array.
+   Replace manual `$.scope.employees.push(...)` with either letting
+   auto-populate handle it, or targeting the parent's list:
+   ```javascript
+   // Before (2.0.x): $.scope.employees.push({ ... })
+   // After (2.1.0):
+   $.scope.departments[0].__jqNested.employees.push({ ... });
+   // or, from a rendered nested element:
+   $('.jq-repeat-employees').first().scopeGet().push({ ... });
+   ```
+
+2. **`update()` is now trailing-edge throttled.** The first `update()` in a
+   burst is no longer applied synchronously — it runs within ~50ms, coalesced
+   with any subsequent updates. If you read the DOM or item data immediately
+   after calling `update()`, wrap that read in a `setTimeout`/event handler so
+   it runs after the throttle tick.
+
+See the [Changelog](./CHANGELOG.md) for the full list of fixes and additions.
+
 ## Core Features
 
 ### Automatic Sorting
@@ -89,7 +116,10 @@ $.scope.users.update('userId', 'user123', { userName: 'John Doe' });
 
 ### Nested Templates
 
-jq-repeat supports nested repeating templates:
+jq-repeat supports nested repeating templates. Each parent instance gets its
+**own** nested scope — multiple parents do not share one global list — and the
+nested scope is **auto-populated** from the array property on the parent item
+whose name matches the nested scope name:
 
 ```html
 <div jq-repeat="departments">
@@ -102,6 +132,18 @@ jq-repeat supports nested repeating templates:
 </div>
 ```
 
+```javascript
+// `employees` inside each department is auto-populated from the
+// `employees` array on the department item:
+$.scope.departments.push({
+    name: 'Engineering',
+    employees: [
+        { firstName: 'John', lastName: 'Doe' },
+        { firstName: 'Jane', lastName: 'Smith' }
+    ]
+});
+```
+
 Access parent data in nested templates using `_parent`:
 
 ```html
@@ -109,6 +151,26 @@ Access parent data in nested templates using `_parent`:
     {{ firstName }} works in {{ _parent.name }}
 </li>
 ```
+
+Because each parent instance owns its own nested list, nested scopes are **not**
+registered under the bare name on `$.scope` (there is no single
+`$.scope.employees`). Access a nested list from a rendered nested element, or
+from the parent item's `__jqNested` map:
+
+```javascript
+// From any rendered nested element:
+$('.jq-repeat-employees').first().scopeGet();        // -> that department's employees RepeatList
+
+// From the parent item:
+$.scope.departments[0].__jqNested.employees;         // -> same list
+
+// All instances of a nested template share a CSS class based on the scope
+// name, so you can select across parents:
+$('.jq-repeat-employees').length;                      // total across all departments
+```
+
+Removing a parent item automatically empties and unregisters its nested scopes
+(and their nested scopes, recursively).
 
 ## Array Methods
 
@@ -183,6 +245,15 @@ $.scope.users.update('user123', { userName: 'Jane Doe' });
 $.scope.items.update('id', 42, { quantity: 10 });
 ```
 
+Updates are **trailing-edge throttled and coalesced per item**: rapid calls to
+`update()` for the *same* item within a 50ms window are merged into a single
+re-render, and the data objects are deep-merged so distinct partial updates
+accumulate rather than clobber each other. The target item is resolved by
+reference at call time, so an update always lands on the item you meant — even
+if an earlier update in the same tick reordered a sorted list. A pending update
+for an item that gets removed before the tick fires is simply cancelled (and
+never throws).
+
 ### `getByKey(key, value)`
 Get an item by key/value:
 ```javascript
@@ -203,6 +274,43 @@ $.scope.items.remove('id', 42);
 Remove all items:
 ```javascript
 $.scope.toDo.empty();
+```
+
+### `destroy()`
+Tear down a scope entirely: empty all of its items (recursively cleaning up any
+nested scopes), cancel any pending throttled updates, remove the placeholder
+holder element, detach from its parent's nested map, and unregister the scope
+from `$.scope`:
+```javascript
+$.scope.toDo.destroy();
+// $.scope.has('toDo') === false; all of its DOM is gone
+```
+
+## `$.scope`
+
+`$.scope` is a proxy over the registry of all repeat scopes.
+
+Reading a scope that has not been created yet (e.g. before its
+`[jq-repeat]` element is in the DOM) returns a throwaway empty array that only
+registers itself the first time you actually mutate it — so the
+push-before-the-template workflow still works without permanently polluting the
+registry on a plain read:
+```javascript
+$.scope.toDo.push({ item: 'Get milk' }); // works even if the template isn't loaded yet
+```
+
+Check whether a scope actually exists without accidentally creating it:
+```javascript
+$.scope.has('toDo');   // true once a [jq-repeat="toDo"] element has initialized
+$.scope.has('nope');   // false (and does not create anything)
+```
+
+`$.scope.onNew` is a callback queue invoked with each newly created scope (top-
+level and nested) right after it initializes:
+```javascript
+$.scope.onNew.push(function(list) {
+    console.log('scope ready:', list.__jqRepeatId);
+});
 ```
 
 ## jQuery Helper Methods
@@ -235,6 +343,12 @@ $('.jq-repeat-toDo').first().scopeItemUpdate({ done: 'Yes' });
 Remove a specific item:
 ```javascript
 $('.jq-repeat-toDo').first().scopeItemRemove();
+```
+
+### `$(element).scopeDestroy()`
+Destroy the scope for an element (see [`destroy()`](#destroy)):
+```javascript
+$('.jq-repeat-toDo').first().scopeDestroy();
 ```
 
 ## Customization Hooks
