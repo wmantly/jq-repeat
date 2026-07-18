@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI/CD**: GitHub Actions workflows — tests + build on Node 18/20/22 for
   every push and pull request, and npm publish (with provenance) on GitHub
   release.
+- **TypeScript definitions**: `types/jq-repeat.d.ts` ships with the package
+  (`types` field) and augments the jQuery globals — `JQRepeat.RepeatList<T>`,
+  `$.scope`, `$.jqRepeat`, and the `scope*` jQuery helpers. Compile-checked
+  in CI via `npm run test:types`.
 
 ### Changed
 - Nested template HTML is parsed once per scope and cloned per render instead
