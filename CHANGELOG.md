@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Dev dependency updates: jQuery 4, chai 6, mocha 11, jsdom/global-jsdom 29,
+  @rollup/plugin-terser 1.0, rollup 4.62. The test suite now runs against
+  jQuery 4 (loaded via its new `jquery/factory` entry); the library remains
+  compatible with jQuery 3.x and 4.x (peer range unchanged).
+
 ## [2.2.1] - 2026-07-18
 
 ### Added

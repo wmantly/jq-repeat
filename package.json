@@ -55,15 +55,15 @@
   },
   "homepage": "https://github.com/wmantly/jq-repeat#readme",
   "devDependencies": {
-    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-terser": "^1.0.0",
     "@types/jquery": "^4.0.1",
-    "chai": "^4.3.4",
-    "global-jsdom": "^27.0.0",
-    "jquery": "^3.7.1",
-    "jsdom": "^27.3.0",
-    "mocha": "^10.2.0",
+    "chai": "^6.2.2",
+    "global-jsdom": "^29.0.0",
+    "jquery": "^4.0.0",
+    "jsdom": "^29.1.1",
+    "mocha": "^11.7.6",
     "mustache": "^4.2.0",
-    "rollup": "^4.54.0",
+    "rollup": "^4.62.2",
     "typescript": "^7.0.2"
   },
   "engines": {
