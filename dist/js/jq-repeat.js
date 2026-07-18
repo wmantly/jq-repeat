@@ -41,29 +41,46 @@
 		// --- Throttling ---
 		//
 		// `throttleMap` is keyed by an arbitrary key (for jq-repeat that key is the
-		// data item being updated). Updates are *trailing-edge*: the first call for a
-		// key schedules a single execution after `minDelay`, and any subsequent calls
-		// within that window are coalesced into that one execution. By default the
-		// latest arguments win; pass a `mergeFn` to combine arguments instead (used by
+		// data item being updated). Throttling is *leading + trailing edge*: the
+		// first call for a key executes on the next microtask (so a burst of calls
+		// made in the same tick coalesces into that first execution, and each call
+		// resolves its target against the not-yet-mutated array), opening a window
+		// of `minDelay` ms. Calls arriving later inside that window are coalesced
+		// into one trailing execution when the window closes. By default the latest
+		// arguments win; pass a `mergeFn` to combine arguments instead (used by
 		// `update()` so that rapid partial merges accumulate instead of clobbering
 		// each other).
 		const throttleMap = new Map();
 
 		function throttle(key, minDelay, callBack, mergeFn, ...args) {
-			if (throttleMap.has(key)) {
-				const entry = throttleMap.get(key);
-				entry.args = mergeFn ? mergeFn(entry.args, args) : args;
+			const existing = throttleMap.get(key);
+			if (existing) {
+				// `args === null` means the leading call already ran; anything
+				// arriving now waits for the trailing edge.
+				existing.args = existing.args === null
+					? args
+					: (mergeFn ? mergeFn(existing.args, args) : args);
 				return;
 			}
 
 			const entry = { args, callBack };
 			throttleMap.set(key, entry);
 
+			queueMicrotask(() => {
+				const current = throttleMap.get(key);
+				if (current !== entry) return; // cancelled before it ran
+				const callArgs = entry.args;
+				entry.args = null;
+				callBack(...callArgs);
+			});
+
 			entry.timer = setTimeout(() => {
 				const current = throttleMap.get(key);
 				if (current === entry) {
 					throttleMap.delete(key);
-					callBack(...current.args);
+					if (current.args !== null) {
+						callBack(...current.args);
+					}
 				}
 			}, minDelay);
 		}
@@ -201,18 +218,33 @@
 					this.__jqOrderReverse = false;
 				}
 
+				// Coalescing window (ms) for update(): the first update in a burst
+				// renders immediately, later ones merge into one trailing render.
+				// Configurable via the `jr-update-delay` attribute.
+				const updateDelay = options && options.updateDelay !== undefined ? Number(options.updateDelay) : NaN;
+				this.__jqUpdateDelay = Number.isFinite(updateDelay) && updateDelay >= 0 ? updateDelay : 50;
+
 				this._parentData = parentData;
 				this.__jqParent = parentId;
 				this.__jqParentIndex = parentIndex;
 				this.__jqTemplate = templateHTML;
-				this.nestedTemplates = nestedTemplates;
+				this.nestedTemplates = nestedTemplates || [];
+
+				// Parse each nested template's HTML once; per-item renders clone
+				// these instead of re-parsing the HTML string every time.
+				Object.defineProperty(this, '__nestedTemplateCache', {
+					value: this.nestedTemplates.map(t => $(`${t}`)),
+					writable: true,
+					enumerable: false,
+					configurable: true,
+				});
 
 				this.$this = $(`<script type="x-tmpl-mustache" id="jq-repeat-holder-${this.__jqRepeatId}"><\/script>`);
 				$(element).replaceWith(this.$this);
 
 				this.parseKeys = {};
 
-				for (let prop of ['put', 'take', 'putUpdate', 'parseData']) {
+				for (let prop of ['put', 'take', 'putUpdate', 'parseData', 'onUpdate']) {
 					Object.defineProperty(this, prop, {
 						enumerable: false,
 						get() {
@@ -354,9 +386,11 @@
 					}
 				}
 
-				// Only return empty array if indexOf was called and returned -1 (item not found)
-				// Don't return empty for negative numeric indices like -1 used by pop()
-				if (wasIndexLookup && index === -1 && (args[0] > 0 || args.length === 1)) {
+				// A lookup (by key or object reference) that found nothing must never
+				// fall through to the numeric path: index -1 would be normalized to
+				// "last item" and silently delete it. Negative numeric indices (e.g.
+				// pop()'s splice(-1, 1)) don't set wasIndexLookup and are unaffected.
+				if (wasIndexLookup && index === -1) {
 					return [];
 				}
 
@@ -473,20 +507,15 @@
 				return this.splice(-1, 1)[0];
 			}
 
-			reverse() {
-				if (this.__jqOrderBy) {
-					console.warn(`jq-repeat: Calling 'reverse()' on a list with 'jr-order-by' defined. This operation might not yield the expected stable sorted order.`);
-				}
-
-				// Reuse the existing elements (detached + re-inserted) rather than
-				// re-rendering, so nothing is leaked and element identity is preserved.
+			// Detach every rendered element and re-insert it in current array order,
+			// refreshing index attributes. Reuses the existing elements rather than
+			// re-rendering, so element identity is preserved and nothing leaks.
+			__syncDomOrder() {
 				for (let i = 0; i < this.length; i++) {
 					if (this[i] && this[i].__jq_$el) {
 						this[i].__jq_$el.detach();
 					}
 				}
-
-				super.reverse();
 
 				let previousElement = this.$this;
 				for (let i = 0; i < this.length; i++) {
@@ -501,6 +530,37 @@
 						previousElement = item.__jq_$el;
 					}
 				}
+				return this;
+			}
+
+			reverse() {
+				if (this.__jqOrderBy) {
+					console.warn(`jq-repeat: Calling 'reverse()' on a list with 'jr-order-by' defined. This operation might not yield the expected stable sorted order.`);
+				}
+
+				super.reverse();
+				return this.__syncDomOrder();
+			}
+
+			sort(compareFn) {
+				if (this.__jqOrderBy) {
+					console.warn(`jq-repeat: Calling 'sort()' on a list with 'jr-order-by' defined. Later inserts will still follow 'jr-order-by', not this sort.`);
+				}
+
+				Array.prototype.sort.call(this, compareFn);
+				return this.__syncDomOrder();
+			}
+
+			// fill() and copyWithin() would duplicate item references across
+			// indices, which cannot be mapped to per-item DOM elements. Refuse
+			// them instead of silently desyncing the DOM.
+			fill() {
+				console.warn(`jq-repeat: 'fill()' is not supported on scope '${this.__jqRepeatId}'. Use splice()/update()/replace() instead. No changes made.`);
+				return this;
+			}
+
+			copyWithin() {
+				console.warn(`jq-repeat: 'copyWithin()' is not supported on scope '${this.__jqRepeatId}'. Use splice()/update()/replace() instead. No changes made.`);
 				return this;
 			}
 
@@ -576,7 +636,17 @@
 				}
 
 				for (let i = 0; i < this.length; ++i) {
-					if (this[i] && this[i].hasOwnProperty(searchKey) && this[i][searchKey] === searchValue) {
+					if (!this[i] || !this[i].hasOwnProperty(searchKey)) continue;
+					const candidate = this[i][searchKey];
+					if (candidate === searchValue) {
+						return i;
+					}
+					// DOM attributes stringify values, so a numeric index key must
+					// still match its attribute form (5 vs "5") when looked up via
+					// the jq-repeat-index attribute (scopeItem() and friends).
+					if ((typeof candidate === 'number' || typeof candidate === 'string') &&
+						(typeof searchValue === 'number' || typeof searchValue === 'string') &&
+						String(candidate) === String(searchValue)) {
 						return i;
 					}
 				}
@@ -631,7 +701,7 @@
 			    // throttle window (instead of "last write wins").
 			    const mergeFn = (prev, next) => [prev[0], $.extend(true, {}, prev[1], next[1])];
 
-			    throttle(item, 50, boundUpdateDom, mergeFn, item, data);
+			    throttle(item, this.__jqUpdateDelay, boundUpdateDom, mergeFn, item, data);
 			    return item;
 			}
 
@@ -660,64 +730,124 @@
 				// Merge new data into the existing item
 				$.extend(true, item, data);
 
-				// Check if sorting position has changed
-				if (this.__jqOrderBy) {
-					if (this.__compareItems(originalItemData, item) !== 0) {
-						// Remove from DOM and array
-						if (originalDOMEl && originalDOMEl.length) {
-							this.__take(originalDOMEl, item, this);
+				let renderIndex = index;
+
+				// If the sort key changed, reposition the item. This is a *move*,
+				// not a removal: the existing element is detached and re-inserted
+				// (no take/put hooks fire), and the content refresh below goes
+				// through putUpdate like any other update.
+				if (this.__jqOrderBy && this.__compareItems(originalItemData, item) !== 0) {
+					super.splice(index, 1);
+					renderIndex = this.__findInsertionIndex(item);
+					super.splice(renderIndex, 0, item);
+
+					if (originalDOMEl && originalDOMEl.length) {
+						originalDOMEl.detach();
+						let previousElement = this.$this;
+						if (renderIndex > 0 && this[renderIndex - 1] && this[renderIndex - 1].__jq_$el) {
+							previousElement = this[renderIndex - 1].__jq_$el;
 						}
-						super.splice(index, 1);
+						previousElement.after(originalDOMEl);
+					}
 
-						// Find new insertion point and insert
-						const newInsertionIndex = this.__findInsertionIndex(item);
-						super.splice(newInsertionIndex, 0, item);
-
-						// Render at new position
-						const $render = this.__renderItem(newInsertionIndex, item);
-
-						let previousElement = null;
-						if (newInsertionIndex > 0 && this[newInsertionIndex - 1] && this[newInsertionIndex - 1].__jq_$el) {
-							previousElement = this[newInsertionIndex - 1].__jq_$el;
-						} else {
-							previousElement = this.$this;
-						}
-
-						if (previousElement && previousElement.length) {
-							previousElement.after($render);
-						} else {
-							this.$this.after($render);
-						}
-
-						this.__put($render, item, this);
-
-						// Re-index elements
-						for (let i = 0; i < this.length; i++) {
-							if (this[i] && this[i].__jq_$el && !this.__jqIndexKey) {
-								this[i].__jq_$el.attr("jq-repeat-index", i);
-							}
-						}
-
-						return $render;
+					// Re-index elements after the move
+					for (let i = 0; i < this.length; i++) {
+						this.__refreshIndexAttr(i, this[i]);
 					}
 				}
 
-				// Standard update (no position change)
-				const renderData = this.__buildData(index, item);
+				// In-place content refresh
+				const renderData = this.__buildData(renderIndex, item);
 				const $render = $(Mustache.render(this.__jqTemplate, renderData));
 
 				$render.attr('jq-repeat-scope', this.__jqRepeatId);
 				if (this.__jqIndexKey && item.hasOwnProperty(this.__jqIndexKey)) {
 					$render.attr('jq-repeat-index', item[this.__jqIndexKey]);
 				} else {
-					$render.attr('jq-repeat-index', index);
+					$render.attr('jq-repeat-index', renderIndex);
 				}
 				$render.addClass(`jq-repeat-${this.__jqBaseId}`);
 
 				this.__putUpdate(originalDOMEl, $render, item, this);
 
 				item.__jq_$el = $render;
+				this.__onUpdate($render, item, this);
 				return $render;
+			}
+
+			/**
+			 * Syncs the list to `newItems`. With an index key, existing items whose
+			 * key matches are updated in place (merged), items missing from
+			 * `newItems` are removed, and new keys are added; without one, items
+			 * are matched by position. DOM order follows `newItems` unless the
+			 * scope has `jr-order-by`, which keeps precedence.
+			 */
+			replace(newItems) {
+				if (!Array.isArray(newItems)) {
+					console.error(`jq-repeat: replace() expects an array for scope '${this.__jqRepeatId}'.`, newItems);
+					return this;
+				}
+
+				const key = this.__jqIndexKey;
+				if (key) {
+					const newKeys = new Set();
+					for (const newItem of newItems) {
+						if (newItem && Object.prototype.hasOwnProperty.call(newItem, key)) {
+							newKeys.add(String(newItem[key]));
+						}
+					}
+
+					// Remove items whose key is gone (backwards, so indices hold).
+					for (let i = this.length - 1; i >= 0; i--) {
+						const existing = this[i];
+						if (!existing || !Object.prototype.hasOwnProperty.call(existing, key) || !newKeys.has(String(existing[key]))) {
+							this.splice(i, 1);
+						}
+					}
+
+					for (const newItem of newItems) {
+						const idx = (newItem && Object.prototype.hasOwnProperty.call(newItem, key))
+							? this.indexOf(key, newItem[key])
+							: -1;
+						if (idx === -1) {
+							this.push(newItem);
+						} else {
+							// Apply synchronously; a pending throttled update would
+							// otherwise re-apply stale data on top of this.
+							cancelThrottle(this[idx]);
+							this.__updateDom(this[idx], newItem);
+						}
+					}
+
+					// Without jr-order-by, mirror the order of newItems in the DOM.
+					if (!this.__jqOrderBy) {
+						const ordered = [];
+						for (const newItem of newItems) {
+							if (!newItem || !Object.prototype.hasOwnProperty.call(newItem, key)) continue;
+							const item = this.getByKey(key, newItem[key]);
+							if (item && !ordered.includes(item)) {
+								ordered.push(item);
+							}
+						}
+						if (ordered.length === this.length) {
+							super.splice(0, this.length, ...ordered);
+							this.__syncDomOrder();
+						}
+					}
+				} else {
+					const common = Math.min(this.length, newItems.length);
+					for (let i = 0; i < common; i++) {
+						cancelThrottle(this[i]);
+						this.__updateDom(this[i], newItems[i]);
+					}
+					if (this.length > newItems.length) {
+						this.splice(newItems.length, this.length - newItems.length);
+					} else if (newItems.length > this.length) {
+						this.push(...newItems.slice(common));
+					}
+				}
+
+				return this;
 			}
 
 			getByKey(...args) {
@@ -743,6 +873,10 @@
 				$render.show();
 				$el.replaceWith($render);
 			}
+
+			// Called after an item's DOM has been updated (data-level hook; fires
+			// for both in-place updates and sorted repositioning).
+			__onUpdate($el, item, list) {}
 
 			__parseData(data) {
 				let parsedData = { ...data };
@@ -778,8 +912,8 @@
 					? data[this.__jqIndexKey]
 					: index;
 
-				for (let idx in this.nestedTemplates) {
-					let $el = $(`${this.nestedTemplates[idx]}`);
+				for (let idx = 0; idx < this.__nestedTemplateCache.length; idx++) {
+					const $el = this.__nestedTemplateCache[idx].clone();
 
 					$el.attr('jq-repeat-parent', this.__jqRepeatId);
 					$el.attr('jq-repeat-parent-index', parentIndexAttr);
@@ -1013,6 +1147,44 @@
 			return this;
 		};
 
+		// --- Global namespace: lifecycle control for SPA teardown ---
+
+		let observer = null;
+
+		$.jqRepeat = {
+			// Tear down every registered scope (DOM elements, nested scopes,
+			// pending throttled updates) and clear pre-populated data arrays.
+			destroyAll() {
+				for (const key of Object.keys(_scope)) {
+					const list = _scope[key];
+					if (list instanceof RepeatList) {
+						list.destroy();
+					} else if (Object.prototype.hasOwnProperty.call(_scope, key)) {
+						delete _scope[key];
+					}
+				}
+			},
+
+			// Stop watching the DOM for new [jq-repeat] templates. Existing
+			// scopes keep working; new templates added after stop() are ignored
+			// until start() is called.
+			stop() {
+				if (observer) {
+					observer.disconnect();
+				}
+			},
+
+			// Resume watching the DOM after stop().
+			start() {
+				if (observer && document.body) {
+					observer.observe(document.body, {
+						childList: true,
+						subtree: true
+					});
+				}
+			},
+		};
+
 		// --- Document Ready and MutationObserver for Auto-Initialization ---
 
 		// A `[jq-repeat]` element that lives inside another `[jq-repeat]` template
@@ -1024,7 +1196,7 @@
 		}
 
 		$(document).ready(function() {
-			const observer = new MutationObserver(function(mutationsList) {
+			observer = new MutationObserver(function(mutationsList) {
 				const candidates = [];
 				for (const mutation of mutationsList) {
 					if (mutation.type !== 'childList') continue;

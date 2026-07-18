@@ -1,5 +1,8 @@
 # jq-repeat
 
+[![CI](https://github.com/wmantly/jq-repeat/actions/workflows/ci.yml/badge.svg)](https://github.com/wmantly/jq-repeat/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/jq-repeat.svg)](https://www.npmjs.com/package/jq-repeat)
+
 A simple, yet highly customizable jQuery plugin to handle all of your client-side repetitive DOM needs. Simple, quick and powerful templating using Mustache syntax. Modeled after ng-repeat with automatic DOM synchronization.
 
 **[View Interactive Demos](https://wmantly.github.io/jq-repeat/)** - See jq-repeat in action with live examples!
@@ -219,6 +222,20 @@ Reverse the order of items:
 $.scope.toDo.reverse();
 ```
 
+### `sort(compareFn)`
+Sort the items and re-order the DOM to match, exactly like `Array.prototype.sort`:
+```javascript
+$.scope.toDo.sort((a, b) => a.item.localeCompare(b.item));
+```
+If the scope has `jr-order-by` set, a warning is logged: the manual sort is
+applied, but later inserts will still follow `jr-order-by`.
+
+> **Unsupported mutators:** `fill()` and `copyWithin()` would duplicate item
+> references across indices, which can't be mapped to per-item DOM elements.
+> They log a warning and make no changes. Likewise, **direct index assignment**
+> (`$.scope.toDo[0] = {...}`) updates the data but is not observed — the DOM
+> will not re-render. Use `update()`, `splice()`, or `replace()` instead.
+
 ### `indexOf(keyOrValue, value)`
 Find the index of an item:
 ```javascript
@@ -232,8 +249,12 @@ const index = $.scope.users.indexOf('name', 'John');
 const index = $.scope.users.indexOf(userObject);
 ```
 
+Number and string key values are matched interchangeably (`5` matches `'5'`),
+because DOM attributes — which back `scopeItem()` and friends — always
+stringify values. Numeric custom index keys therefore work everywhere.
+
 ### `update(keyOrIndex, valueOrData, dataToUpdate)`
-Update an item with automatic DOM re-rendering (throttled at 50ms):
+Update an item with automatic DOM re-rendering:
 ```javascript
 // Update by index
 $.scope.toDo.update(0, { done: 'Yes' });
@@ -245,14 +266,42 @@ $.scope.users.update('user123', { userName: 'Jane Doe' });
 $.scope.items.update('id', 42, { quantity: 10 });
 ```
 
-Updates are **trailing-edge throttled and coalesced per item**: rapid calls to
-`update()` for the *same* item within a 50ms window are merged into a single
-re-render, and the data objects are deep-merged so distinct partial updates
-accumulate rather than clobber each other. The target item is resolved by
-reference at call time, so an update always lands on the item you meant — even
-if an earlier update in the same tick reordered a sorted list. A pending update
-for an item that gets removed before the tick fires is simply cancelled (and
-never throws).
+Updates are **coalesced per item, leading + trailing edge**: the first
+`update()` for an item renders on the next microtask (effectively
+immediately), which opens a coalescing window — 50ms by default, configurable
+per scope with the `jr-update-delay` attribute:
+```html
+<li jq-repeat="feed" jr-update-delay="200">...</li>
+```
+Later calls for the *same* item inside the window are deep-merged into a
+single trailing re-render, so distinct partial updates accumulate rather than
+clobber each other. The target item is resolved by reference at call time, so
+an update always lands on the item you meant — even if an earlier update in
+the same tick reordered a sorted list. A pending update for an item that gets
+removed before the window closes is simply cancelled (and never throws).
+
+On a sorted scope (`jr-order-by`), an update that changes the sort key
+*moves* the item: its element is detached and re-inserted at the new
+position, then refreshed through the normal `putUpdate` hook. The `take` and
+`put` hooks do **not** fire for moves — they are reserved for real removals
+and additions.
+
+### `replace(newItems)`
+Sync the whole list to a new array in one call — ideal for "reload from the
+server" without the flash of `empty()` + `push(...)`:
+```javascript
+const rows = await fetch('/api/users').then(r => r.json());
+$.scope.users.replace(rows);
+```
+
+With a custom index key, `replace()` diffs by key: existing items whose key
+still appears are **updated in place** (data deep-merged, `putUpdate` fires),
+items whose key is gone are removed (`take` fires), and new keys are added
+(`put` fires). The DOM is re-ordered to match `newItems` — unless the scope
+has `jr-order-by`, which keeps precedence.
+
+Without an index key, items are matched by position: overlapping indices are
+updated in place, extras are removed, and additions are appended.
 
 ### `getByKey(key, value)`
 Get an item by key/value:
@@ -313,6 +362,27 @@ $.scope.onNew.push(function(list) {
 });
 ```
 
+## `$.jqRepeat` — Global Lifecycle
+
+For single-page apps that need to tear jq-repeat down:
+
+```javascript
+// Destroy every registered scope: their DOM, nested scopes, pending updates,
+// and any pre-populated data arrays.
+$.jqRepeat.destroyAll();
+
+// Stop watching the DOM for new [jq-repeat] templates. Existing scopes keep
+// working; templates added while stopped are ignored.
+$.jqRepeat.stop();
+
+// Resume watching.
+$.jqRepeat.start();
+```
+
+Note that nested templates also initialize through the DOM watcher, so calling
+`stop()` while parent scopes are still receiving items will prevent their
+nested lists from initializing.
+
 ## jQuery Helper Methods
 
 ### `$(element).scopeGet()`
@@ -362,7 +432,8 @@ $.scope.toDo.__put = function($el, item, list) {
 ```
 
 ### `__take($el, item, list)`
-Called when an item is removed from the DOM:
+Called when an item is removed from the DOM. Not called when a sorted update
+merely repositions an item — moves go through `__putUpdate` instead:
 ```javascript
 $.scope.toDo.__take = function($el, item, list) {
     $el.fadeOut(300, function() {
@@ -379,6 +450,16 @@ $.scope.toDo.__putUpdate = function($oldEl, $newEl, item, list) {
         $newEl.fadeIn(150);
         $oldEl.replaceWith($newEl);
     });
+};
+```
+
+### `__onUpdate($el, item, list)`
+Data-level hook called after an item's DOM has been updated (both in-place
+updates and sorted repositions). Unlike `__putUpdate` it has no DOM
+responsibilities — use it to react to changes:
+```javascript
+$.scope.toDo.onUpdate = function($el, item, list) {
+    console.log('item changed:', item);
 };
 ```
 

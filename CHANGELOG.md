@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-07-17
+
+### Fixed
+- **`splice()` with a not-found target no longer deletes the last item**: a
+  lookup (by key, string, or object reference) that finds nothing now always
+  returns `[]` instead of falling through to index `-1`, which was normalized
+  to "last item" and silently removed it.
+- **Numeric custom index keys work with the jQuery helpers**: `scopeItem()`,
+  `scopeItemUpdate()`, and `scopeItemRemove()` read the `jq-repeat-index` DOM
+  attribute (always a string); `indexOf()` now matches number and string key
+  values interchangeably (`5` matches `'5'`), so numeric ids resolve correctly
+  everywhere, including nested-parent lookups.
+- **`sort()` keeps the DOM in sync**: `Array.prototype.sort` previously
+  reordered the data while leaving the DOM (and index attributes) stale;
+  `sort()` is now overridden to re-order elements like `reverse()` does.
+- **`fill()` and `copyWithin()` refuse instead of desyncing**: both would
+  duplicate item references across indices, which cannot map to per-item DOM
+  elements. They now warn and make no changes.
+- **Sorted repositioning no longer fires `take`/`put`**: an `update()` that
+  moves an item (sort key changed) now detaches and re-inserts the existing
+  element and refreshes it through `putUpdate` — user hooks doing teardown on
+  `take` no longer see moves as removals.
+
+### Added
+- **`replace(newItems)`**: sync the whole list to a new array in one call.
+  With an index key it diffs by key (update in place / remove / add) and
+  mirrors the new order (unless `jr-order-by` takes precedence); without one
+  it matches by position.
+- **Leading-edge updates + `jr-update-delay`**: the first `update()` in a
+  burst now renders on the next microtask instead of waiting out the 50ms
+  window; later calls in the window still coalesce into one trailing render.
+  The window is configurable per scope via the `jr-update-delay` attribute.
+- **`onUpdate` hook**: per-scope data-level callback fired after an item's
+  DOM updates (in-place and repositioning), alongside the existing
+  `put`/`take`/`putUpdate` DOM hooks.
+- **`$.jqRepeat` lifecycle namespace**: `destroyAll()` tears down every
+  registered scope; `stop()`/`start()` disconnect and reconnect the
+  MutationObserver for SPA teardown.
+- **CI/CD**: GitHub Actions workflows — tests + build on Node 18/20/22 for
+  every push and pull request, and npm publish (with provenance) on GitHub
+  release.
+
+### Changed
+- Nested template HTML is parsed once per scope and cloned per render instead
+  of re-parsed for every item.
+
 ## [2.1.0] - 2026-07-16
 
 ### Fixed

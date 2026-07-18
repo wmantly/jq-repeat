@@ -1,5 +1,23 @@
 # Publishing Guide
 
+## Automated publishing (preferred)
+
+CI runs tests and the build on every push and pull request
+(`.github/workflows/ci.yml`, Node 18/20/22). Publishing to npm is automated by
+`.github/workflows/publish.yml`: **publishing a GitHub Release** (e.g. tag
+`v2.2.0`) triggers install → test → build → `npm publish --provenance`.
+
+One-time setup: create an npm **automation token** and add it to the GitHub
+repository secrets as `NPM_TOKEN`.
+
+So the release flow is:
+
+1. Update `package.json` version and `CHANGELOG.md`, commit, push.
+2. Wait for CI to go green.
+3. Create a GitHub Release for tag `vX.Y.Z` — the publish workflow does the rest.
+
+The manual steps below still work as a fallback.
+
 ## Pre-publish Checklist
 
 Before publishing to npm, ensure:
