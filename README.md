@@ -9,7 +9,7 @@ A simple, yet highly customizable jQuery plugin to handle all of your client-sid
 
 ## Requirements
 
-* **jQuery 3.x** ([http://jquery.com/](http://jquery.com/))
+* **jQuery 3.x or 4.x** ([http://jquery.com/](http://jquery.com/)) — the test suite runs against 4.x
 * **Mustache 4.x** ([https://github.com/janl/mustache.js](https://github.com/janl/mustache.js))
 
 ## Installation

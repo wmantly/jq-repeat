@@ -1,5 +1,4 @@
 import globalJsdom from 'global-jsdom';
-import jquery from 'jquery';
 import Mustache from 'mustache';
 
 // Set up a global DOM environment
@@ -8,8 +7,10 @@ globalJsdom('<!DOCTYPE html><html><head></head><body></body></html>', {
   pretendToBeVisual: true
 });
 
-// Make jQuery and Mustache available globally
-const $ = jquery(window);
+// jQuery 4 requires a window at import time (static imports are hoisted above
+// the globalJsdom() call), so load it dynamically now that the DOM exists.
+const { jQueryFactory } = await import('jquery/factory');
+const $ = jQueryFactory(window);
 global.jQuery = $;
 global.$ = $;
 global.Mustache = Mustache;
