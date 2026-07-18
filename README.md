@@ -26,6 +26,21 @@ npm install jq-repeat
 <script src="dist/js/jq-repeat.min.js"></script>
 ```
 
+### TypeScript
+
+Type definitions ship with the package (`types/jq-repeat.d.ts`) and augment
+the jQuery globals — you just need `@types/jquery`:
+
+```typescript
+interface Todo { item: string; done: string; }
+
+const todos = $.scope.toDo as JQRepeat.RepeatList<Todo>;
+todos.push({ item: 'Get milk', done: 'No' });   // typed
+todos.update(0, { done: 'Yes' });               // Partial<Todo>
+
+const item = $('.jq-repeat-toDo').first().scopeItem<Todo>();
+```
+
 ## Quick Start
 
 ### Template Setup

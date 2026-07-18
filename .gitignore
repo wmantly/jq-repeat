@@ -33,5 +33,4 @@ bower_components
 # NPM package tarballs
 *.tgz
 
-# Lock files
-package-lock.json
+# package-lock.json is committed so CI installs reproducible dependencies

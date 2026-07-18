@@ -1,13 +1,15 @@
 {
   "name": "jq-repeat",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "type": "module",
   "description": "A simple, yet highly customizable jQuery plugin for dynamic DOM templating with Mustache. Supports automatic sorting, nested templates, and custom index keys.",
   "main": "dist/js/jq-repeat.js",
   "browser": "dist/js/jq-repeat.min.js",
+  "types": "types/jq-repeat.d.ts",
   "files": [
     "dist/",
     "src/",
+    "types/",
     "README.md",
     "LICENSE"
   ],
@@ -35,7 +37,8 @@
   "scripts": {
     "build": "rollup -c",
     "test": "mocha",
-    "prepublishOnly": "npm run build && npm test"
+    "test:types": "tsc -p types/tsconfig.json",
+    "prepublishOnly": "npm run build && npm test && npm run test:types"
   },
   "peerDependencies": {
     "jquery": ">=3.0.0",
@@ -53,13 +56,15 @@
   "homepage": "https://github.com/wmantly/jq-repeat#readme",
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
+    "@types/jquery": "^4.0.1",
     "chai": "^4.3.4",
     "global-jsdom": "^27.0.0",
     "jquery": "^3.7.1",
     "jsdom": "^27.3.0",
     "mocha": "^10.2.0",
     "mustache": "^4.2.0",
-    "rollup": "^4.54.0"
+    "rollup": "^4.54.0",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=14.0.0"

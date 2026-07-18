@@ -1,0 +1,11 @@
+{
+	"compilerOptions": {
+		"noEmit": true,
+		"strict": true,
+		"noUnusedLocals": false,
+		"lib": ["ES2020", "DOM"],
+		"types": ["jquery"],
+		"skipLibCheck": false
+	},
+	"include": ["jq-repeat.d.ts", "jq-repeat.test-d.ts"]
+}
