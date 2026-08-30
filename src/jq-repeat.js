@@ -43,7 +43,7 @@ class CallbackQueue {
 	// arguments win; pass a `mergeFn` to combine arguments instead (used by
 	// `update()` so that rapid partial merges accumulate instead of clobbering
 	// each other).
-	const throttleMap = new Map();
+	const throttleMap = new WeakMap();
 
 	function throttle(key, minDelay, callBack, mergeFn, ...args) {
 		const existing = throttleMap.get(key);

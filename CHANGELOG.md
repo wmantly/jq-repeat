@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.2] - 2026-08-30
+
+### Fixed
+- **Memory leak prevention**: Use `WeakMap` for internal `throttleMap` to allow
+  unreferenced throttled items to be reclaimed by garbage collection rather than
+  retained in a strong map until timer expiration.
+
 ### Changed
 - Dev dependency updates: jQuery 4, chai 6, mocha 11, jsdom/global-jsdom 29,
   @rollup/plugin-terser 1.0, rollup 4.62. The test suite now runs against
