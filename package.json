@@ -1,6 +1,6 @@
 {
   "name": "jq-repeat",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "type": "module",
   "description": "A simple, yet highly customizable jQuery plugin for dynamic DOM templating with Mustache. Supports automatic sorting, nested templates, and custom index keys.",
   "main": "dist/js/jq-repeat.js",
@@ -61,7 +61,7 @@
     "global-jsdom": "^29.0.0",
     "jquery": "^4.0.0",
     "jsdom": "^29.1.1",
-    "mocha": "^11.7.6",
+    "mocha": "^12.0.1",
     "mustache": "^4.2.0",
     "rollup": "^4.62.2",
     "typescript": "^7.0.2"
