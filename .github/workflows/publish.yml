@@ -1,7 +1,23 @@
 name: Publish to npm
 
-# Publishes when a GitHub Release is published.
-# Requires an npm automation token stored as the NPM_TOKEN repository secret.
+# Publishes when a GitHub Release is published, using npm TRUSTED PUBLISHING
+# (OIDC) -- no NPM_TOKEN, and no long-lived credential in this repo at all.
+#
+# Why not a token: npm has been retiring long-lived automation tokens in
+# response to the 2025 supply-chain worms. A stolen token publishes forever;
+# an OIDC credential is minted per-run, scoped to this repository and this
+# workflow file, and expires in minutes. It is also what produces provenance
+# attestations automatically -- `--provenance` is implied and must NOT be
+# passed explicitly.
+#
+# REQUIRES a one-time setup on npmjs.com, per package:
+#   Package -> Settings -> Trusted Publisher -> GitHub Actions
+#     Organization or user: wmantly
+#     Repository:           jq-repeat
+#     Workflow filename:    publish.yml      <- this file's NAME, not its path
+#     Environment:          (leave empty)
+# All fields are case-sensitive. Renaming this file breaks publishing until the
+# npmjs.com side is updated to match.
 on:
   release:
     types: [published]
@@ -11,21 +27,31 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # npm provenance
+      id-token: write # mints the OIDC token npm exchanges for publish rights
     steps:
       - uses: actions/checkout@v4
 
+      # Node 24 for npm >= 11.5.1, which is the floor for trusted publishing.
+      # Node 22.x still ships npm 10.x, which fails with a plain auth error and
+      # no hint that the CLI is simply too old -- so npm is pinned explicitly
+      # rather than left to whatever the Node line happens to bundle.
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.x
+          node-version: 24.x
           registry-url: https://registry.npmjs.org
-          cache: npm
+
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
 
       - name: Install dependencies
         run: npm ci
 
-      # prepublishOnly runs build + test again as a final gate
+      # prepublishOnly runs build + test again as a final gate, but run them
+      # here too so a failure is reported against its own step.
+      - name: Test
+        run: npm test
+
       - name: Publish
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
