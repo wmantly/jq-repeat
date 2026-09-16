@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.3] - 2026-09-16
+
+### Changed
+- **Batched DOM insertion.** Adding several items at once now renders each item
+  individually (each needs its own Mustache pass and its own `__jq_$el`) but
+  performs a single DOM write through a `DocumentFragment`, instead of one
+  `.after()` per item. Inserting one at a time pays the cost of touching an
+  attached, already-large container once per item; a fragment pays it once.
+  Applies to `splice()` with multiple additions, `push(...items)`,
+  `unshift(...items)`, `__sortedBatchAdd` and `__syncDomOrder` (so `sort()`,
+  `reverse()` and sorted inserts benefit too). A single-item insert keeps the
+  previous path, where a fragment would be pure overhead.
+
+  Measured in Chrome on rows carrying realistic markup (nested spans, badges,
+  buttons), one batched push: 1,000 rows 134ms -> 103ms, 2,000 rows 613ms ->
+  374ms, 4,000 rows 1,274ms -> 1,013ms.
+
+  `put` is still called with the element already in the document, at every call
+  site. `__sortedBatchAdd` previously called it *before* insertion, alone among
+  the call sites; it now matches the rest.
+
 ## [2.2.2] - 2026-08-30
 
 ### Fixed
