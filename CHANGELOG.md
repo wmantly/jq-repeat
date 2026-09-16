@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.4] - 2026-09-16
+
+### Changed
+- Dev dependency updates clearing all 12 open advisories (5 high, 7 moderate).
+  Every one was in a **development** dependency -- nothing shipped to consumers
+  was affected -- but the repo's alert banner made that hard to see at a glance.
+  `npm audit` now reports 0 vulnerabilities. mocha 11 -> 12 is the only major
+  bump; the 64-test suite passes on it unchanged.
+
+  No library code changed in this release.
+
 ## [2.2.3] - 2026-09-16
 
 ### Changed
