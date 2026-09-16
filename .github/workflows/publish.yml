@@ -21,6 +21,8 @@ name: Publish to npm
 on:
   release:
     types: [published]
+  # So an auth problem can be diagnosed without burning a version number.
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -35,10 +37,32 @@ jobs:
       # Node 22.x still ships npm 10.x, which fails with a plain auth error and
       # no hint that the CLI is simply too old -- so npm is pinned explicitly
       # rather than left to whatever the Node line happens to bundle.
-      - uses: actions/setup-node@v4
+      #
+      # setup-node@v6, not v4. v4 writes an .npmrc containing
+      # `_authToken=${NODE_AUTH_TOKEN}` and sets NODE_AUTH_TOKEN to the literal
+      # placeholder `XXXXX-XXXXX-XXXXX-XXXXX` when no token is supplied. npm
+      # then finds a credential, uses it instead of falling back to OIDC, and
+      # the registry rejects the garbage as `E404 ... PUT ... Not Found` --
+      # which reads like a missing package, not an auth failure, on a package
+      # that plainly exists. This is the exact shape npm's own documented
+      # workflow avoids; it pins v6 and disables the package-manager cache.
+      # NO registry-url, deliberately.
+      #
+      # setup-node writes an .npmrc containing `_authToken=${NODE_AUTH_TOKEN}`
+      # whenever registry-url is given, and sets NODE_AUTH_TOKEN to the literal
+      # placeholder `XXXXX-XXXXX-XXXXX-XXXXX` when no token is supplied --
+      # confirmed on v4 and v6 alike. npm then has a credential, uses it rather
+      # than falling back to OIDC, and the registry rejects the garbage as
+      # `E404 ... PUT` on a package that plainly exists -- an error that reads
+      # like a missing package rather than an auth failure.
+      #
+      # With the input dropped, `npm config get //registry.npmjs.org/:_authToken`
+      # is empty and npm reaches its OIDC exchange. registry.npmjs.org is the
+      # default registry, so nothing else is lost.
+      - uses: actions/setup-node@v6
         with:
           node-version: 24.x
-          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Ensure npm supports trusted publishing
         run: |
@@ -54,4 +78,6 @@ jobs:
         run: npm test
 
       - name: Publish
-        run: npm publish --access public
+        # --loglevel verbose so an auth failure names the mechanism that was
+        # tried, instead of the bare E404 that looks like a missing package.
+        run: npm publish --access public --loglevel verbose
